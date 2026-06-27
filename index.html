@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mejor Toma</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mp4box.js/0.5.2/mp4box.all.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=DM+Sans:wght@300..700&display=swap');
+:root{
+  --bg:#f5f0e8;--bg2:#ede7d9;--ink:#1a1612;--ink2:#4a4038;--ink3:#7a6e62;
+  --rust:#c1440e;--rust2:#9a3509;--rust-pale:#f5e8e1;
+  --gold:#c8973a;--line:#d8cfc2;--white:#fdfaf5;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{-webkit-text-size-adjust:100%;}
+body{background:var(--bg);color:var(--ink);font-family:'DM Sans',system-ui,sans-serif;min-height:100vh;font-size:15px;}
+.page{max-width:520px;margin:0 auto;padding:28px 20px 80px;}
+.tag{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--rust);font-weight:700;display:block;margin-bottom:12px;}
+h1{font-family:'Fraunces',serif;font-size:clamp(2.4rem,8vw,3rem);font-weight:300;font-style:italic;line-height:1;margin-bottom:10px;}
+h1 em{font-style:normal;color:var(--rust);}
+.sub{font-size:.88rem;color:var(--ink2);line-height:1.6;margin-bottom:28px;}
+/* upload */
+.box{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:clamp(20px,5vw,28px);text-align:center;}
+.box p{font-size:.88rem;color:var(--ink2);margin-bottom:14px;}
+.pick{display:inline-flex;align-items:center;gap:8px;background:var(--ink);color:var(--bg);border:none;border-radius:999px;padding:13px 26px;font-size:.88rem;font-weight:600;font-family:inherit;cursor:pointer;transition:background .2s;}
+.pick:hover{background:var(--rust2);}
+input[type=file]{display:none;}
+.pickedInfo{display:none;margin-top:18px;padding-top:18px;border-top:1px solid var(--line);text-align:left;}
+.pickedInfo.show{display:block;}
+.fn{font-size:.85rem;font-weight:600;word-break:break-all;}
+.fm{font-size:.78rem;color:var(--ink3);margin-top:2px;}
+.controls{margin-top:14px;display:flex;flex-direction:column;gap:12px;}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.row label{font-size:.82rem;color:var(--ink2);}
+input[type=range]{-webkit-appearance:none;width:110px;height:3px;background:var(--line);border-radius:2px;outline:none;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--rust);cursor:pointer;border:2px solid var(--white);box-shadow:0 0 0 1px var(--rust);}
+.tog{position:relative;width:42px;height:24px;border-radius:999px;background:var(--line);border:none;cursor:pointer;flex-shrink:0;transition:background .2s;}
+.tog::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--white);transition:transform .2s cubic-bezier(.22,1,.36,1);}
+.tog.on{background:var(--rust);}
+.tog.on::after{transform:translateX(18px);}
+.go{width:100%;margin-top:16px;background:var(--rust);color:#fff;border:none;border-radius:14px;padding:15px;font-size:.92rem;font-weight:700;font-family:inherit;cursor:pointer;transition:background .2s;}
+.go:hover{background:var(--rust2);}
+.go:disabled{background:var(--line);color:var(--ink3);cursor:not-allowed;}
+/* proc */
+.proc{display:none;padding:48px 0;text-align:center;}
+.proc.show{display:block;}
+.ring{width:48px;height:48px;margin:0 auto 18px;border:3px solid var(--line);border-top-color:var(--rust);border-radius:50%;animation:spin .9s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.pt{font-family:'Fraunces',serif;font-style:italic;font-size:1.1rem;color:var(--ink);margin-bottom:4px;}
+.ps{font-size:.8rem;color:var(--ink3);}
+.bw{width:100%;background:var(--line);border-radius:99px;height:3px;margin-top:16px;overflow:hidden;}
+.bf{height:100%;background:var(--rust);border-radius:99px;width:0%;transition:width .3s ease-out;}
+.bp{font-size:.75rem;color:var(--ink3);margin-top:6px;}
+/* results */
+.results{display:none;}
+.results.show{display:block;}
+.rh{display:flex;align-items:baseline;justify-content:space-between;margin:32px 0 16px;}
+.rh h2{font-family:'Fraunces',serif;font-style:italic;font-weight:300;font-size:1.4rem;}
+.again{background:none;border:none;font-family:inherit;font-size:.78rem;color:var(--ink3);cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+@media(min-width:420px){.grid{grid-template-columns:repeat(3,1fr);}}
+.card{background:var(--white);border:1px solid var(--line);border-radius:14px;overflow:hidden;opacity:0;transform:translateY(8px);animation:up .45s cubic-bezier(.16,1,.3,1) forwards;}
+.card.best{border-color:var(--gold);}
+@keyframes up{to{opacity:1;transform:translateY(0);}}
+.thumb{position:relative;background:var(--bg2);}
+.thumb img{display:block;width:100%;height:auto;}
+.badge{position:absolute;top:8px;left:8px;font-size:.65rem;font-weight:700;padding:3px 8px;border-radius:99px;background:var(--ink);color:var(--bg);}
+.badge.gold{background:var(--gold);color:var(--ink);}
+.cmeta{padding:10px 11px 12px;}
+.srow{display:flex;align-items:center;gap:7px;margin-bottom:8px;}
+.sbar{flex:1;height:3px;background:var(--bg2);border-radius:99px;overflow:hidden;}
+.sbar span{display:block;height:100%;background:var(--rust);border-radius:99px;}
+.sval{font-size:.72rem;font-weight:700;color:var(--rust2);font-variant-numeric:tabular-nums;}
+.acts{display:flex;gap:6px;}
+.acts button{flex:1;font-family:inherit;font-size:.7rem;font-weight:600;padding:8px 0;border-radius:9px;border:1px solid var(--line);background:transparent;color:var(--ink2);cursor:pointer;}
+.acts button.p{background:var(--ink);color:var(--bg);border-color:var(--ink);}
+.acts button:active{transform:scale(.97);}
+/* error */
+.err{display:none;margin-top:12px;padding:12px 14px;background:var(--rust-pale);border:1px solid #e0a090;color:var(--rust2);border-radius:10px;font-size:.82rem;line-height:1.5;}
+.err.show{display:block;}
+.note{margin-top:22px;font-size:.76rem;color:var(--ink3);border-top:1px solid var(--line);padding-top:14px;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="page">
+  <span class="tag">Selector de fotogramas</span>
+  <h1>Tu mejor <em>ángulo</em></h1>
+  <p class="sub">Sube un video del iPhone (.mov o .mp4) y la app encuentra los momentos donde te ves más simétrico y con mejor luz.</p>
+
+  <div class="box" id="zone">
+    <p>Elige un video desde tu galería</p>
+    <label class="pick" for="fileIn">Elegir video</label>
+    <input type="file" id="fileIn" accept="video/*">
+    <div class="pickedInfo" id="info">
+      <div class="fn" id="fn"></div>
+      <div class="fm" id="fm"></div>
+      <div class="controls">
+        <div class="row">
+          <label for="sl">Fotos a mostrar: <strong id="slv">8</strong></label>
+          <input type="range" id="sl" min="4" max="12" value="8">
+        </div>
+        <div class="row">
+          <label>Recorte cuadrado (IG)</label>
+          <button id="sqt" class="tog" type="button" aria-pressed="false"></button>
+        </div>
+      </div>
+      <button class="go" id="goBtn">Analizar video</button>
+    </div>
+    <div class="err" id="errBox"></div>
+  </div>
+
+  <div class="proc" id="proc">
+    <div class="ring"></div>
+    <p class="pt" id="pt">Analizando…</p>
+    <p class="ps" id="ps"></p>
+    <div class="bw"><div class="bf" id="bf"></div></div>
+    <p class="bp" id="bp">0%</p>
+  </div>
+
+  <div class="results" id="results">
+    <div class="rh">
+      <h2>Tus mejores tomas</h2>
+      <button class="again" id="again">analizar otro</button>
+    </div>
+    <div class="grid" id="grid"></div>
+    <p class="note">Puntaje basado en simetría estimada, nitidez y exposición. Tú decides cuál te gusta más 😉</p>
+  </div>
+</div>
+<script>
+(function(){
+// ─── UI refs ───────────────────────────────────────────────────
+const fileIn=document.getElementById('fileIn'),
+  zone=document.getElementById('zone'),
+  info=document.getElementById('info'),
+  fnEl=document.getElementById('fn'),
+  fmEl=document.getElementById('fm'),
+  sl=document.getElementById('sl'),
+  slv=document.getElementById('slv'),
+  sqt=document.getElementById('sqt'),
+  goBtn=document.getElementById('goBtn'),
+  errBox=document.getElementById('errBox'),
+  proc=document.getElementById('proc'),
+  pt=document.getElementById('pt'),
+  ps=document.getElementById('ps'),
+  bf=document.getElementById('bf'),
+  bp=document.getElementById('bp'),
+  results=document.getElementById('results'),
+  grid=document.getElementById('grid'),
+  again=document.getElementById('again');
+
+let file=null, square=false;
+sl.oninput=()=>{slv.textContent=sl.value;};
+sqt.onclick=()=>{square=!square;sqt.classList.toggle('on',square);};
+function err(m){errBox.textContent=m;errBox.classList.add('show');}
+function noErr(){errBox.textContent='';errBox.classList.remove('show');}
+function prog(f,t,s){
+  const p=Math.round(f*100);
+  bf.style.width=p+'%';bp.textContent=p+'%';
+  if(t)pt.textContent=t;if(s!==undefined)ps.textContent=s;
+}
+
+fileIn.onchange=e=>{const f=e.target.files[0];if(f)pick(f);};
+function pick(f){noErr();file=f;fnEl.textContent=f.name;fmEl.textContent=(f.size/1024/1024).toFixed(1)+' MB';info.classList.add('show');}
+
+// ─── SCORING ───────────────────────────────────────────────────
+function gray(data,w,h){
+  const g=new Float32Array(w*h);
+  for(let i=0,p=0;i<data.length;i+=4,p++)g[p]=0.299*data[i]+0.587*data[i+1]+0.114*data[i+2];
+  return g;
+}
+function scorePixels(imgData){
+  const{data,width:w,height:h}=imgData,g=gray(data,w,h);
+  let ss=0,sc=0;
+  for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=y*w+x,gx=g[i+1]-g[i-1],gy=g[i+w]-g[i-w];ss+=gx*gx+gy*gy;sc++;}
+  const sharp=sc?ss/sc:0;
+  let s=0;for(let i=0;i<g.length;i++)s+=g[i];
+  const m=s/g.length;
+  let exp=m<40?(m/40)*.3:m>215?Math.max(0,1-(m-215)/40):Math.max(0,1-Math.abs(m-128)/128*.4);
+  const cx=w/2,sp=Math.max(2,Math.round(w*.1)),st=Math.max(1,Math.round(w*.03)),y0=Math.round(h*.05),y1=Math.round(h*.85);
+  let best=Infinity;
+  for(let off=-sp;off<=sp;off+=st){
+    const ax=cx+off,mo=Math.min(ax,w-ax)-2;if(mo<w*.15)continue;
+    let d=0,n=0;
+    for(let y=y0;y<y1;y+=2)for(let dx=4;dx<mo;dx+=2){
+      const xl=Math.round(ax-dx),xr=Math.round(ax+dx);
+      if(xl<0||xr>=w)continue;d+=Math.abs(g[y*w+xl]-g[y*w+xr]);n++;
+    }
+    if(n&&d/n<best)best=d/n;
+  }
+  const sym=Math.max(0,1-(isFinite(best)?best:60)/70);
+  return{sharp,exp,sym};
+}
+
+// ─── MP4BOX DEMUX ──────────────────────────────────────────────
+function demux(arrayBuf,maxSamples){
+  return new Promise((resolve,reject)=>{
+    if(!window.MP4Box){return reject(new Error('MP4Box no cargó. Asegúrate de estar en Safari con conexión a internet.'));}
+    const mp4=MP4Box.createFile();
+    const keySamples=[];
+    let vInfo=null,desc=null;
+
+    mp4.onReady=function(info){
+      if(!info.videoTracks||!info.videoTracks.length)return reject(new Error('El video no tiene pista de video.'));
+      const t=info.videoTracks[0];
+      vInfo={id:t.id,codec:t.codec,w:t.video.width,h:t.video.height};
+      // extract codec description box (avcC / hvcC)
+      try{
+        const trak=mp4.moov.traks.find(tr=>tr.tkhd.track_id===t.id);
+        const entry=trak.mdia.minf.stbl.stsd.entries[0];
+        const box=entry.avcC||entry.hvcC||entry.vpcC||entry.av1C;
+        if(box){
+          const stream=new DataStream(undefined,0,DataStream.BIG_ENDIAN);
+          box.write(stream);
+          desc=new Uint8Array(stream.buffer,8); // skip 8-byte header
+        }
+      }catch(e){console.warn('desc extract failed:',e);}
+      mp4.setExtractionOptions(t.id,null,{nbSamples:9999});
+      mp4.start();
+    };
+
+    mp4.onSamples=function(id,ref,samples){
+      for(const s of samples){if(s.is_sync)keySamples.push(s);}
+    };
+
+    mp4.onFlush=function(){
+      if(!vInfo)return reject(new Error('No se pudo leer el video.'));
+      const step=Math.max(1,Math.floor(keySamples.length/maxSamples));
+      const sel=[];
+      for(let i=0;i<keySamples.length;i+=step){if(sel.length>=maxSamples)break;sel.push(keySamples[i]);}
+      resolve({samples:sel,info:vInfo,desc});
+    };
+
+    mp4.onError=function(e){reject(new Error('Error leyendo el video: '+e));};
+
+    arrayBuf.fileStart=0;
+    mp4.appendBuffer(arrayBuf);
+    mp4.flush();
+  });
+}
+
+// ─── WEBCODECS DECODE ──────────────────────────────────────────
+async function decodeFrame(sample,info,desc,vw,vh,square){
+  return new Promise((resolve,reject)=>{
+    if(!window.VideoDecoder){
+      reject(new Error('Tu navegador no soporta WebCodecs. Necesitas iOS 16+ o Safari 16+.'));
+      return;
+    }
+    const cfg={codec:info.codec,codedWidth:info.w,codedHeight:info.h};
+    if(desc)cfg.description=desc;
+
+    const dec=new VideoDecoder({
+      output:(frame)=>{
+        const sw=info.w,sh=info.h;
+        let sx=0,sy=0,dw=vw,dh=vh;
+        if(square){const sz=Math.min(sw,sh);sx=Math.round((sw-sz)/2);sy=Math.max(0,Math.round((sh-sz)/2*.6));dw=sz;dh=sz;}
+        // draw to small canvas for scoring
+        const sc2=document.createElement('canvas');sc2.width=180;sc2.height=Math.round(sh*(180/sw));
+        const sc2x=sc2.getContext('2d');
+        sc2x.drawImage(frame,sx,sy,dw,dh,0,0,sc2.width,sc2.height);
+        const id=sc2x.getImageData(0,0,sc2.width,sc2.height);
+        const sc=scorePixels(id);
+        // draw to full canvas for export
+        const fc=document.createElement('canvas');fc.width=dw;fc.height=dh;
+        const fcx=fc.getContext('2d');
+        fcx.drawImage(frame,sx,sy,dw,dh,0,0,dw,dh);
+        frame.close();
+        dec.close();
+        resolve({score:sc,dataUrl:fc.toDataURL('image/jpeg',.92)});
+      },
+      error:(e)=>{dec.close();reject(new Error('Decode error: '+e.message));}
+    });
+
+    VideoDecoder.isConfigSupported(cfg).then(sup=>{
+      if(!sup.supported){
+        dec.close();
+        reject(new Error('Codec '+info.codec+' no soportado. Intenta con un video .mp4 grabado en modo "Más compatible" (Settings > Cámara > Formatos).'));
+        return;
+      }
+      dec.configure(cfg);
+      dec.decode(new EncodedVideoChunk({
+        type:'key',
+        timestamp:Math.round((sample.cts*1e6)/sample.timescale),
+        data:sample.data,
+      }));
+      dec.flush().catch(reject);
+    }).catch(reject);
+  });
+}
+
+// ─── MAIN ──────────────────────────────────────────────────────
+async function analyze(){
+  noErr();
+  zone.style.display='none';
+  proc.classList.add('show');
+  results.classList.remove('show');
+  grid.innerHTML='';
+  prog(0,'Leyendo el video…','');
+
+  const MAX=50, wanted=parseInt(sl.value);
+
+  try{
+    prog(.05,'Leyendo archivo…','');
+    const buf=await file.arrayBuffer();
+
+    prog(.1,'Demuxeando el video…','Extrayendo fotogramas clave');
+    const{samples,info,desc}=await demux(buf,MAX);
+    if(!samples.length)throw new Error('No se encontraron fotogramas clave en el video.');
+
+    const vw=square?Math.min(info.w,info.h):info.w;
+    const vh=square?Math.min(info.w,info.h):info.h;
+
+    prog(.2,'Decodificando fotogramas…',`0 / ${samples.length}`);
+
+    const decoded=[];
+    for(let i=0;i<samples.length;i++){
+      try{
+        const r=await decodeFrame(samples[i],info,desc,vw,vh,square);
+        decoded.push(r);
+      }catch(e){
+        if(i===0)throw e; // si el primero falla, abortar
+        // ignorar frames problemáticos
+      }
+      prog(.2+.7*((i+1)/samples.length),'Analizando fotogramas…',`${i+1} / ${samples.length}`);
+    }
+
+    // normalizar nitidez
+    const sharps=decoded.map(d=>d.score.sharp);
+    const minS=Math.min(...sharps),maxS=Math.max(...sharps);
+    decoded.forEach(d=>{d.score.sn=maxS>minS?(d.score.sharp-minS)/(maxS-minS):1;d.total=d.score.sym*.55+d.score.sn*.30+d.score.exp*.15;});
+    decoded.sort((a,b)=>b.total-a.total);
+
+    prog(1,'¡Listo!','');
+    render(decoded.slice(0,wanted));
+  }catch(e){
+    proc.classList.remove('show');
+    zone.style.display='';
+    err(e.message||'Error desconocido. Intenta de nuevo.');
+  }
+}
+
+function render(frames){
+  proc.classList.remove('show');results.classList.add('show');grid.innerHTML='';
+  frames.forEach((f,i)=>{
+    const p=Math.round(f.total*100);
+    const card=document.createElement('div');
+    card.className='card'+(i===0?' best':'');
+    card.style.animationDelay=(i*.06)+'s';
+    card.innerHTML=
+      '<div class="thumb"><img src="'+f.dataUrl+'" loading="lazy">'+
+      '<span class="badge'+(i===0?' gold':'')+'">'+( i===0?'TOP':'#'+(i+1))+'</span></div>'+
+      '<div class="cmeta"><div class="srow"><div class="sbar"><span style="width:'+p+'%"></span></div><span class="sval">'+p+'</span></div>'+
+      '<div class="acts"><button data-dl>Guardar</button><button class="p" data-sh>Compartir</button></div></div>';
+    const nm='mejor-toma-'+(i+1)+'.jpg';
+    card.querySelector('[data-dl]').onclick=()=>{const a=document.createElement('a');a.href=f.dataUrl;a.download=nm;document.body.appendChild(a);a.click();a.remove();};
+    card.querySelector('[data-sh]').onclick=async()=>{
+      try{const bl=await(await fetch(f.dataUrl)).blob();const fi=new File([bl],nm,{type:'image/jpeg'});if(navigator.canShare&&navigator.canShare({files:[fi]})){await navigator.share({files:[fi],title:'Mi mejor toma'});return;}}catch(e){if(e&&e.name==='AbortError')return;}
+      const a=document.createElement('a');a.href=f.dataUrl;a.download=nm;document.body.appendChild(a);a.click();a.remove();
+    };
+    grid.appendChild(card);
+  });
+}
+
+goBtn.onclick=()=>{if(file)analyze();};
+again.onclick=()=>{file=null;fileIn.value='';info.classList.remove('show');results.classList.remove('show');zone.style.display='';noErr();};
+})();
+</script>
+</body>
+</html>
