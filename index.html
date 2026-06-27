@@ -18,8 +18,8 @@ h1 em{font-style:normal;color:var(--rust);}
 .box>p{font-size:.88rem;color:var(--ink2);margin-bottom:14px;}
 .pick{display:inline-flex;align-items:center;background:var(--ink);color:var(--bg);border:none;border-radius:999px;padding:13px 26px;font-size:.88rem;font-weight:600;font-family:inherit;cursor:pointer;}
 input[type=file]{display:none;}
-.pickedInfo{display:none;margin-top:18px;padding-top:18px;border-top:1px solid var(--line);text-align:left;}
-.pickedInfo.show{display:block;}
+.pinfo{display:none;margin-top:18px;padding-top:18px;border-top:1px solid var(--line);text-align:left;}
+.pinfo.show{display:block;}
 .fn{font-size:.85rem;font-weight:600;word-break:break-all;}
 .fm{font-size:.78rem;color:var(--ink3);margin-top:2px;}
 .controls{margin-top:14px;display:flex;flex-direction:column;gap:12px;}
@@ -79,7 +79,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
     <p>Elige un video desde tu galería</p>
     <label class="pick" for="fileIn">Elegir video</label>
     <input type="file" id="fileIn" accept="video/*">
-    <div class="pickedInfo" id="info">
+    <div class="pinfo" id="pinfo">
       <div class="fn" id="fn"></div>
       <div class="fm" id="fm"></div>
       <div class="controls">
@@ -99,7 +99,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
 
   <div class="proc" id="proc">
     <div class="ring"></div>
-    <p class="pt" id="pt">Preparando…</p>
+    <p class="pt" id="pt">Analizando…</p>
     <p class="ps" id="ps"></p>
     <div class="bw"><div class="bf" id="bf"></div></div>
     <p class="bp" id="bp">0%</p>
@@ -114,13 +114,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
     <p class="note">Puntaje basado en simetría estimada, nitidez y exposición. Tú decides cuál te gusta más 😉</p>
   </div>
 </div>
-
-<script type="module">
-import { FFmpeg } from 'https://unpkg.com/@ffmpeg/ffmpeg@0.12.6/dist/esm/index.js';
-import { fetchFile, toBlobURL } from 'https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js';
-
+<script>
+(function(){
 const fileIn=document.getElementById('fileIn'),zone=document.getElementById('zone'),
-  info=document.getElementById('info'),fnEl=document.getElementById('fn'),
+  pinfo=document.getElementById('pinfo'),fnEl=document.getElementById('fn'),
   fmEl=document.getElementById('fm'),sl=document.getElementById('sl'),
   slv=document.getElementById('slv'),sqt=document.getElementById('sqt'),
   goBtn=document.getElementById('goBtn'),errBox=document.getElementById('errBox'),
@@ -129,25 +126,23 @@ const fileIn=document.getElementById('fileIn'),zone=document.getElementById('zon
   bp=document.getElementById('bp'),results=document.getElementById('results'),
   grid=document.getElementById('grid'),again=document.getElementById('again');
 
-let file=null,square=false,ffmpegInst=null;
+let file=null, square=false;
 sl.oninput=()=>{slv.textContent=sl.value;};
 sqt.onclick=()=>{square=!square;sqt.classList.toggle('on',square);};
 function showErr(m){errBox.textContent=m;errBox.classList.add('show');}
 function noErr(){errBox.textContent='';errBox.classList.remove('show');}
 function prog(f,t,s){const p=Math.round(f*100);bf.style.width=p+'%';bp.textContent=p+'%';if(t)pt.textContent=t;if(s!==undefined)ps.textContent=s;}
 
-fileIn.onchange=e=>{const f=e.target.files[0];if(f){noErr();file=f;fnEl.textContent=f.name;fmEl.textContent=(f.size/1024/1024).toFixed(1)+' MB';info.classList.add('show');}};
+fileIn.onchange=e=>{const f=e.target.files[0];if(f){noErr();file=f;fnEl.textContent=f.name;fmEl.textContent=(f.size/1024/1024).toFixed(1)+' MB';pinfo.classList.add('show');}};
 
-async function getFF(){
-  if(ffmpegInst)return ffmpegInst;
-  const ff=new FFmpeg();
-  const BASE='https://unpkg.com/@ffmpeg/core-st@0.12.6/dist/esm';
-  await ff.load({
-    coreURL: await toBlobURL(BASE+'/ffmpeg-core.js','text/javascript'),
-    wasmURL: await toBlobURL(BASE+'/ffmpeg-core.wasm','application/wasm'),
+function seekTo(vid,t){
+  return new Promise(res=>{
+    let done=false;
+    const id=setTimeout(()=>{if(!done){done=true;vid.removeEventListener('seeked',h);res();}},2000);
+    function h(){if(done)return;done=true;clearTimeout(id);vid.removeEventListener('seeked',h);res();}
+    vid.addEventListener('seeked',h);
+    vid.currentTime=t;
   });
-  ffmpegInst=ff;
-  return ff;
 }
 
 function gray(data,w,h){const g=new Float32Array(w*h);for(let i=0,p=0;i<data.length;i+=4,p++)g[p]=0.299*data[i]+0.587*data[i+1]+0.114*data[i+2];return g;}
@@ -162,76 +157,111 @@ function score(imgData){
   const cx=w/2,sp=Math.max(2,Math.round(w*.1)),st=Math.max(1,Math.round(w*.03)),y0=Math.round(h*.05),y1=Math.round(h*.85);
   let best=Infinity;
   for(let off=-sp;off<=sp;off+=st){const ax=cx+off,mo=Math.min(ax,w-ax)-2;if(mo<w*.15)continue;let d=0,n=0;for(let y=y0;y<y1;y+=2)for(let dx=4;dx<mo;dx+=2){const xl=Math.round(ax-dx),xr=Math.round(ax+dx);if(xl<0||xr>=w)continue;d+=Math.abs(g[y*w+xl]-g[y*w+xr]);n++;}if(n&&d/n<best)best=d/n;}
-  const sym=Math.max(0,1-(isFinite(best)?best:60)/70);
-  return{sharp,exp,sym};
+  return{sharp,exp,sym:Math.max(0,1-(isFinite(best)?best:60)/70)};
 }
 
 async function analyze(){
   noErr();zone.style.display='none';proc.classList.add('show');results.classList.remove('show');grid.innerHTML='';
-  prog(0,'Cargando motor de video…','Solo la primera vez (~25 MB)');
+  prog(0,'Cargando video…','');
+
+  const MAX=45, W=200;
+  let objUrl;
   try{
-    const ff=await getFF();
-    prog(.12,'Leyendo el video…','');
-    const inName='input'+file.name.slice(file.name.lastIndexOf('.'));
-    await ff.writeFile(inName,await fetchFile(file));
-    prog(.2,'Extrayendo fotogramas…','Soporta .mov y .mp4');
-    await ff.exec(['-i',inName,'-vf','fps=1/2,scale=320:-2','-frames:v','40','-q:v','3','-f','image2','thumb%03d.jpg']);
-    const thumbs=[];
-    for(let i=1;i<=40;i++){
-      const nm=`thumb${String(i).padStart(3,'0')}.jpg`;
-      try{thumbs.push(await ff.readFile(nm));await ff.deleteFile(nm);}catch{break;}
-    }
-    if(!thumbs.length)throw new Error('No se pudieron extraer fotogramas del video.');
+    objUrl=URL.createObjectURL(file);
+    const vid=document.createElement('video');
+    vid.src=objUrl;vid.muted=true;vid.playsInline=true;vid.preload='auto';
+    vid.style.cssText='position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;';
+    document.body.appendChild(vid);
+
+    // Esperar metadata con eventos múltiples
+    await new Promise((res,rej)=>{
+      const cleanup=()=>{vid.removeEventListener('loadedmetadata',onMeta);vid.removeEventListener('error',onErr);clearTimeout(tid);};
+      function onMeta(){cleanup();res();}
+      function onErr(){
+        cleanup();
+        const ec=vid.error?vid.error.code:0;
+        const msgs={1:'Carga abortada',2:'Error de red',3:'Error decodificando el video — puede ser que el codec HEVC no sea compatible en este dispositivo',4:'El formato .mov/codec de este video no es compatible. Intenta con un video .mp4'};
+        rej(new Error(msgs[ec]||'No se pudo leer el video (código '+ec+')'));
+      }
+      const tid=setTimeout(()=>{cleanup();rej(new Error('Timeout cargando el video. El archivo puede estar corrupto.'));},20000);
+      vid.addEventListener('loadedmetadata',onMeta);
+      vid.addEventListener('error',onErr);
+      vid.load();
+    });
+
+    const dur=vid.duration,vw=vid.videoWidth,vh=vid.videoHeight;
+    if(!dur||!vw||!vh)throw new Error('No se pudo leer la duración o dimensiones del video.');
+
+    // Primer seek para "despertar" el decodificador en iOS
+    await seekTo(vid,0.1);
+
+    const margin=Math.min(0.5,dur*0.05);
+    const step=Math.max(0.3,(dur-margin*2)/MAX);
+    const times=[];
+    for(let t=margin;t<dur-margin;t+=step){if(times.length>=MAX)break;times.push(parseFloat(t.toFixed(2)));}
+    if(!times.length)times.push(dur/2);
+
+    const ac=document.createElement('canvas');
+    ac.width=W;ac.height=Math.max(1,Math.round(vh*(W/vw)));
+    const ax=ac.getContext('2d',{willReadFrequently:true});
+
     const scored=[];
-    for(let i=0;i<thumbs.length;i++){
-      const blob=new Blob([thumbs[i]],{type:'image/jpeg'});
-      const url=URL.createObjectURL(blob);
-      await new Promise(res=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas');c.width=180;c.height=Math.round(img.naturalHeight*(180/img.naturalWidth));const x=c.getContext('2d');x.drawImage(img,0,0,c.width,c.height);const s=score(x.getImageData(0,0,c.width,c.height));scored.push({t:i*2+1,...s});URL.revokeObjectURL(url);res();};img.onerror=res;img.src=url;});
-      prog(.2+.5*(i+1)/thumbs.length,'Analizando fotogramas…',`${i+1} / ${thumbs.length}`);
+    for(let i=0;i<times.length;i++){
+      await seekTo(vid,times[i]);
+      ax.drawImage(vid,0,0,ac.width,ac.height);
+      let id;
+      try{id=ax.getImageData(0,0,ac.width,ac.height);}
+      catch(e){throw new Error('Error al leer píxeles del video: '+e.message+'. Esto puede pasar si el video tiene DRM o el codec HEVC no es soportado en canvas.');}
+      const s=score(id);
+      scored.push({t:times[i],...s});
+      prog((i+1)/times.length*.85,'Analizando fotogramas…',`${i+1} / ${times.length}`);
+      if(i%8===0)await new Promise(r=>setTimeout(r,0));
     }
+
     const sharps=scored.map(r=>r.sharp),minS=Math.min(...sharps),maxS=Math.max(...sharps);
     scored.forEach(r=>{r.sn=maxS>minS?(r.sharp-minS)/(maxS-minS):1;r.total=r.sym*.55+r.sn*.30+r.exp*.15;});
     scored.sort((a,b)=>b.total-a.total);
-    const wanted=parseInt(sl.value),top=scored.slice(0,wanted);
-    prog(.75,'Exportando las mejores tomas…','');
+    const top=scored.slice(0,parseInt(sl.value));
+
+    prog(.88,'Exportando las mejores tomas…','');
+    const fc=document.createElement('canvas'),fctx=fc.getContext('2d');
     const frames=[];
     for(let i=0;i<top.length;i++){
-      const t=top[i].t,out=`best${i}.jpg`;
-      const args=['-ss',String(t),'-i',inName,'-frames:v','1','-q:v','2'];
-      if(square)args.push('-vf','crop=min(iw\\,ih):min(iw\\,ih),scale=1080:1080');
-      else args.push('-vf','scale=1080:-2');
-      args.push(out);
-      await ff.exec(args);
-      const raw=await ff.readFile(out);
-      await ff.deleteFile(out);
-      const dataUrl=await new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.readAsDataURL(new Blob([raw],{type:'image/jpeg'}));});
-      frames.push({dataUrl,score:top[i].total});
-      prog(.75+.23*(i+1)/top.length,'Exportando…',`${i+1} / ${top.length}`);
+      const r=top[i];
+      await seekTo(vid,r.t);
+      let sx=0,sy=0,sw=vw,sh=vh;
+      if(square){const sz=Math.min(vw,vh);sx=Math.round((vw-sz)/2);sy=Math.max(0,Math.round((vh-sz)/2*.6));sw=sz;sh=sz;}
+      fc.width=sw;fc.height=sh;
+      fctx.drawImage(vid,sx,sy,sw,sh,0,0,sw,sh);
+      frames.push({url:fc.toDataURL('image/jpeg',.92),s:r.total});
+      prog(.88+.12*(i+1)/top.length,'Exportando…',`${i+1}/${top.length}`);
     }
-    await ff.deleteFile(inName);
+    URL.revokeObjectURL(objUrl);vid.remove();
     prog(1,'¡Listo!','');
     render(frames);
   }catch(e){
+    if(objUrl)URL.revokeObjectURL(objUrl);
     proc.classList.remove('show');zone.style.display='';
-    showErr(e.message||'Error desconocido. Intenta de nuevo.');
+    showErr(e.message||'Error desconocido.');
   }
 }
 
 function render(frames){
   proc.classList.remove('show');results.classList.add('show');grid.innerHTML='';
   frames.forEach((f,i)=>{
-    const p=Math.round(f.score*100),card=document.createElement('div');
+    const p=Math.round(f.s*100),card=document.createElement('div');
     card.className='card'+(i===0?' best':'');card.style.animationDelay=(i*.06)+'s';
-    card.innerHTML='<div class="thumb"><img src="'+f.dataUrl+'" loading="lazy"><span class="badge'+(i===0?' gold':'')+'">'+( i===0?'TOP':'#'+(i+1))+'</span></div><div class="cmeta"><div class="srow"><div class="sbar"><span style="width:'+p+'%"></span></div><span class="sval">'+p+'</span></div><div class="acts"><button data-dl>Guardar</button><button class="p" data-sh>Compartir</button></div></div>';
+    card.innerHTML='<div class="thumb"><img src="'+f.url+'" loading="lazy"><span class="badge'+(i===0?' gold':'')+'">'+( i===0?'TOP':'#'+(i+1))+'</span></div><div class="cmeta"><div class="srow"><div class="sbar"><span style="width:'+p+'%"></span></div><span class="sval">'+p+'</span></div><div class="acts"><button data-dl>Guardar</button><button class="p" data-sh>Compartir</button></div></div>';
     const nm='mejor-toma-'+(i+1)+'.jpg';
-    card.querySelector('[data-dl]').onclick=()=>{const a=document.createElement('a');a.href=f.dataUrl;a.download=nm;document.body.appendChild(a);a.click();a.remove();};
-    card.querySelector('[data-sh]').onclick=async()=>{try{const bl=await(await fetch(f.dataUrl)).blob(),fi=new File([bl],nm,{type:'image/jpeg'});if(navigator.canShare&&navigator.canShare({files:[fi]})){await navigator.share({files:[fi],title:'Mi mejor toma'});return;}}catch(e){if(e&&e.name==='AbortError')return;}const a=document.createElement('a');a.href=f.dataUrl;a.download=nm;document.body.appendChild(a);a.click();a.remove();};
+    card.querySelector('[data-dl]').onclick=()=>{const a=document.createElement('a');a.href=f.url;a.download=nm;document.body.appendChild(a);a.click();a.remove();};
+    card.querySelector('[data-sh]').onclick=async()=>{try{const bl=await(await fetch(f.url)).blob();const fi=new File([bl],nm,{type:'image/jpeg'});if(navigator.canShare&&navigator.canShare({files:[fi]})){await navigator.share({files:[fi],title:'Mi mejor toma'});return;}}catch(e){if(e?.name==='AbortError')return;}const a=document.createElement('a');a.href=f.url;a.download=nm;document.body.appendChild(a);a.click();a.remove();};
     grid.appendChild(card);
   });
 }
 
 goBtn.onclick=()=>{if(file)analyze();};
-again.onclick=()=>{file=null;fileIn.value='';info.classList.remove('show');results.classList.remove('show');zone.style.display='';noErr();};
+again.onclick=()=>{file=null;fileIn.value='';pinfo.classList.remove('show');results.classList.remove('show');zone.style.display='';noErr();};
+})();
 </script>
 </body>
 </html>
