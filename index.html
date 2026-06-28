@@ -11,15 +11,14 @@
 body{background:var(--bg);color:var(--ink);font-family:'DM Sans',system-ui,sans-serif;min-height:100vh;font-size:15px;}
 .page{max-width:520px;margin:0 auto;padding:28px 20px 80px;}
 .tag{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--rust);font-weight:700;display:block;margin-bottom:12px;}
-h1{font-family:'Fraunces',serif;font-size:clamp(2.4rem,8vw,3rem);font-weight:300;font-style:italic;line-height:1;margin-bottom:10px;}
+h1{font-family:'Fraunces',serif;font-size:clamp(2.2rem,7vw,2.9rem);font-weight:300;font-style:italic;line-height:1.05;margin-bottom:10px;}
 h1 em{font-style:normal;color:var(--rust);}
 .sub{font-size:.88rem;color:var(--ink2);line-height:1.6;margin-bottom:28px;}
 .box{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:clamp(20px,5vw,28px);text-align:center;}
 .box>p{font-size:.88rem;color:var(--ink2);margin-bottom:14px;}
-/* Fix iOS: el input no puede ser display:none, usar posición absoluta invisible */
 .file-wrap{position:relative;display:inline-block;}
 #fileIn{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:2;}
-.pick{display:inline-flex;align-items:center;background:var(--ink);color:var(--bg);border:none;border-radius:999px;padding:13px 26px;font-size:.88rem;font-weight:600;font-family:inherit;cursor:pointer;position:relative;z-index:1;}
+.pick{display:inline-flex;align-items:center;background:var(--ink);color:var(--bg);border:none;border-radius:999px;padding:13px 26px;font-size:.88rem;font-weight:600;font-family:inherit;cursor:pointer;}
 .pinfo{display:none;margin-top:18px;padding-top:18px;border-top:1px solid var(--line);text-align:left;}
 .pinfo.show{display:block;}
 .fn{font-size:.85rem;font-weight:600;word-break:break-all;}
@@ -35,7 +34,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 .tog.on::after{transform:translateX(18px);}
 .go{width:100%;margin-top:16px;background:var(--rust);color:#fff;border:none;border-radius:14px;padding:15px;font-size:.92rem;font-weight:700;font-family:inherit;cursor:pointer;}
 .go:disabled{background:var(--line);color:var(--ink3);cursor:not-allowed;}
-.proc{display:none;padding:48px 0;text-align:center;}
+.proc{display:none;padding:44px 0;text-align:center;}
 .proc.show{display:block;}
 .ring{width:48px;height:48px;margin:0 auto 18px;border:3px solid var(--line);border-top-color:var(--rust);border-radius:50%;animation:spin .9s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
@@ -44,27 +43,30 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 .bw{width:100%;background:var(--line);border-radius:99px;height:3px;margin-top:16px;overflow:hidden;}
 .bf{height:100%;background:var(--rust);border-radius:99px;width:0%;transition:width .3s ease-out;}
 .bp{font-size:.75rem;color:var(--ink3);margin-top:6px;}
+/* results */
 .results{display:none;}
 .results.show{display:block;}
 .rh{display:flex;align-items:baseline;justify-content:space-between;margin:32px 0 16px;}
 .rh h2{font-family:'Fraunces',serif;font-style:italic;font-weight:300;font-size:1.4rem;}
 .again{background:none;border:none;font-family:inherit;font-size:.78rem;color:var(--ink3);cursor:pointer;text-decoration:underline;}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
-@media(min-width:420px){.grid{grid-template-columns:repeat(3,1fr);}}
-.card{background:var(--white);border:1px solid var(--line);border-radius:14px;overflow:hidden;opacity:0;transform:translateY(8px);animation:up .45s cubic-bezier(.16,1,.3,1) forwards;}
+.cards{display:flex;flex-direction:column;gap:14px;}
+.card{background:var(--white);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;gap:0;opacity:0;transform:translateY(8px);animation:up .5s cubic-bezier(.16,1,.3,1) forwards;}
 .card.best{border-color:var(--gold);}
 @keyframes up{to{opacity:1;transform:translateY(0);}}
-.thumb{position:relative;background:var(--bg2);}
-.thumb img{display:block;width:100%;height:auto;}
+.thumb{width:120px;flex-shrink:0;position:relative;background:var(--bg2);}
+.thumb img{display:block;width:100%;height:100%;object-fit:cover;}
 .badge{position:absolute;top:8px;left:8px;font-size:.65rem;font-weight:700;padding:3px 8px;border-radius:99px;background:var(--ink);color:var(--bg);}
 .badge.gold{background:var(--gold);color:var(--ink);}
-.cmeta{padding:10px 11px 12px;}
-.srow{display:flex;align-items:center;gap:7px;margin-bottom:8px;}
+.cbody{padding:12px 14px;flex:1;display:flex;flex-direction:column;justify-content:space-between;min-width:0;}
+.scores{display:flex;flex-direction:column;gap:5px;margin-bottom:8px;}
+.srow{display:flex;align-items:center;gap:7px;}
+.slabel{font-size:.68rem;color:var(--ink3);width:68px;flex-shrink:0;}
 .sbar{flex:1;height:3px;background:var(--bg2);border-radius:99px;overflow:hidden;}
-.sbar span{display:block;height:100%;background:var(--rust);border-radius:99px;}
-.sval{font-size:.72rem;font-weight:700;color:var(--rust2);}
-.acts{display:flex;gap:6px;}
-.acts button{flex:1;font-family:inherit;font-size:.7rem;font-weight:600;padding:8px 0;border-radius:9px;border:1px solid var(--line);background:transparent;color:var(--ink2);cursor:pointer;}
+.sbar span{display:block;height:100%;background:var(--rust);border-radius:99px;transition:width .6s ease-out;}
+.sval{font-size:.68rem;font-weight:700;color:var(--rust2);width:24px;text-align:right;flex-shrink:0;}
+.tip{font-size:.74rem;color:var(--ink2);font-style:italic;line-height:1.4;border-top:1px solid var(--line);padding-top:7px;margin-top:2px;}
+.acts{display:flex;gap:6px;margin-top:8px;}
+.acts button{flex:1;font-family:inherit;font-size:.7rem;font-weight:600;padding:7px 0;border-radius:9px;border:1px solid var(--line);background:transparent;color:var(--ink2);cursor:pointer;}
 .acts button.p{background:var(--ink);color:var(--bg);border-color:var(--ink);}
 .err{display:none;margin-top:12px;padding:12px 14px;background:var(--rust-pale);border:1px solid #e0a090;color:var(--rust2);border-radius:10px;font-size:.82rem;line-height:1.5;}
 .err.show{display:block;}
@@ -73,39 +75,37 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 </head>
 <body>
 <div class="page">
-  <span class="tag">Selector de fotogramas</span>
+  <span class="tag">Selector de fotogramas · IA</span>
   <h1>Tu mejor <em>ángulo</em></h1>
-  <p class="sub">Sube un video del iPhone (.mov o .mp4) y la app encuentra los momentos donde te ves más simétrico y con mejor luz.</p>
+  <p class="sub">La IA analiza cada momento del video: simetría facial, luz, color, ángulo y expresión — y elige las tomas donde te ves como modelo.</p>
 
   <div class="box" id="zone">
     <p>Elige un video desde tu galería</p>
-    <!-- Fix iOS: input sobre el botón, no display:none -->
     <div class="file-wrap">
       <input type="file" id="fileIn" accept="video/*">
       <span class="pick">Elegir video</span>
     </div>
-
     <div class="pinfo" id="pinfo">
       <div class="fn" id="fn"></div>
       <div class="fm" id="fm"></div>
       <div class="controls">
         <div class="row">
-          <label>Fotos a mostrar: <strong id="slv">8</strong></label>
-          <input type="range" id="sl" min="4" max="12" value="8">
+          <label>Fotos a mostrar: <strong id="slv">6</strong></label>
+          <input type="range" id="sl" min="3" max="10" value="6">
         </div>
         <div class="row">
           <label>Recorte cuadrado (IG)</label>
           <button id="sqt" class="tog" type="button"></button>
         </div>
       </div>
-      <button class="go" id="goBtn">Analizar video</button>
+      <button class="go" id="goBtn">Analizar con IA</button>
     </div>
     <div class="err" id="errBox"></div>
   </div>
 
   <div class="proc" id="proc">
     <div class="ring"></div>
-    <p class="pt" id="pt">Analizando…</p>
+    <p class="pt" id="pt">Extrayendo fotogramas…</p>
     <p class="ps" id="ps"></p>
     <div class="bw"><div class="bf" id="bf"></div></div>
     <p class="bp" id="bp">0%</p>
@@ -116,201 +116,240 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       <h2>Tus mejores tomas</h2>
       <button class="again" id="again">analizar otro</button>
     </div>
-    <div class="grid" id="grid"></div>
-    <p class="note">Puntaje basado en simetría estimada, nitidez y exposición. Tú decides cuál te gusta más 😉</p>
+    <div class="cards" id="cards"></div>
+    <p class="note">Análisis de IA basado en simetría facial, luz, color, ángulo y expresión. El orden es una guía — tú eliges cuál te gusta más.</p>
   </div>
 </div>
 <script>
 (function(){
-  var fileIn=document.getElementById('fileIn'),
-    zone=document.getElementById('zone'),
-    pinfo=document.getElementById('pinfo'),
-    fnEl=document.getElementById('fn'),
-    fmEl=document.getElementById('fm'),
-    sl=document.getElementById('sl'),
-    slv=document.getElementById('slv'),
-    sqt=document.getElementById('sqt'),
-    goBtn=document.getElementById('goBtn'),
-    errBox=document.getElementById('errBox'),
-    proc=document.getElementById('proc'),
-    pt=document.getElementById('pt'),
-    ps=document.getElementById('ps'),
-    bf=document.getElementById('bf'),
-    bp=document.getElementById('bp'),
-    results=document.getElementById('results'),
-    grid=document.getElementById('grid'),
-    again=document.getElementById('again');
+var fileIn=document.getElementById('fileIn'),zone=document.getElementById('zone'),
+  pinfo=document.getElementById('pinfo'),fnEl=document.getElementById('fn'),fmEl=document.getElementById('fm'),
+  sl=document.getElementById('sl'),slv=document.getElementById('slv'),sqt=document.getElementById('sqt'),
+  goBtn=document.getElementById('goBtn'),errBox=document.getElementById('errBox'),
+  proc=document.getElementById('proc'),pt=document.getElementById('pt'),ps=document.getElementById('ps'),
+  bf=document.getElementById('bf'),bp=document.getElementById('bp'),
+  results=document.getElementById('results'),cards=document.getElementById('cards'),
+  again=document.getElementById('again');
 
-  var file=null, square=false;
+var file=null,square=false;
+sl.addEventListener('input',function(){slv.textContent=sl.value;});
+sqt.addEventListener('click',function(){square=!square;sqt.classList.toggle('on',square);});
+function showErr(m){errBox.textContent=m;errBox.classList.add('show');}
+function noErr(){errBox.textContent='';errBox.classList.remove('show');}
+function prog(f,t,s){var p=Math.round(f*100);bf.style.width=p+'%';bp.textContent=p+'%';if(t)pt.textContent=t;if(s!==undefined)ps.textContent=s;}
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
 
-  sl.addEventListener('input',function(){slv.textContent=sl.value;});
-  sqt.addEventListener('click',function(){square=!square;sqt.classList.toggle('on',square);});
+fileIn.addEventListener('change',function(e){
+  var f=e.target.files&&e.target.files[0];
+  if(!f){showErr('No se seleccionó ningún archivo.');return;}
+  noErr();file=f;
+  fnEl.textContent=f.name;
+  fmEl.textContent=(f.size/1024/1024).toFixed(1)+' MB ✓';
+  pinfo.classList.add('show');
+});
 
-  function showErr(m){errBox.textContent=m;errBox.classList.add('show');}
-  function noErr(){errBox.textContent='';errBox.classList.remove('show');}
-  function prog(f,t,s){
-    var p=Math.round(f*100);
-    bf.style.width=p+'%';bp.textContent=p+'%';
-    if(t)pt.textContent=t;
-    if(s!==undefined)ps.textContent=s;
-  }
-
-  // iOS necesita addEventListener, no onchange
-  fileIn.addEventListener('change',function(e){
-    var f=e.target.files&&e.target.files[0];
-    if(!f){showErr('No se seleccionó ningún archivo.');return;}
-    noErr();
-    file=f;
-    fnEl.textContent=f.name;
-    fmEl.textContent=(f.size/1024/1024).toFixed(1)+' MB — video seleccionado ✓';
-    pinfo.classList.add('show');
+function seekTo(vid,t){
+  return new Promise(function(res){
+    var done=false;
+    var id=setTimeout(function(){if(!done){done=true;vid.removeEventListener('seeked',h);res();}},2500);
+    function h(){if(done)return;done=true;clearTimeout(id);vid.removeEventListener('seeked',h);res();}
+    vid.addEventListener('seeked',h);
+    vid.currentTime=t;
   });
+}
 
-  function seekTo(vid,t){
-    return new Promise(function(res){
-      var done=false;
-      var id=setTimeout(function(){if(!done){done=true;vid.removeEventListener('seeked',h);res();}},2500);
-      function h(){if(done)return;done=true;clearTimeout(id);vid.removeEventListener('seeked',h);res();}
-      vid.addEventListener('seeked',h);
-      vid.currentTime=t;
+// Extrae frame como dataURL (jpeg comprimido para API)
+function frameToDataURL(vid,vw,vh,sq,quality){
+  var sx=0,sy=0,sw=vw,sh=vh;
+  if(sq){var sz=Math.min(vw,vh);sx=Math.round((vw-sz)/2);sy=Math.max(0,Math.round((vh-sz)/2*.6));sw=sz;sh=sz;}
+  var c=document.createElement('canvas');
+  // Para análisis de IA usamos 512px max
+  var scale=Math.min(1,512/Math.max(sw,sh));
+  c.width=Math.round(sw*scale);c.height=Math.round(sh*scale);
+  c.getContext('2d').drawImage(vid,sx,sy,sw,sh,0,0,c.width,c.height);
+  return c.toDataURL('image/jpeg',quality||0.75);
+}
+
+// Extrae frame full res para guardar
+function frameFullRes(vid,vw,vh,sq){
+  var sx=0,sy=0,sw=vw,sh=vh;
+  if(sq){var sz=Math.min(vw,vh);sx=Math.round((vw-sz)/2);sy=Math.max(0,Math.round((vh-sz)/2*.6));sw=sz;sh=sz;}
+  var c=document.createElement('canvas');c.width=sw;c.height=sh;
+  c.getContext('2d').drawImage(vid,sx,sy,sw,sh,0,0,sw,sh);
+  return c.toDataURL('image/jpeg',0.92);
+}
+
+// Score rápido por píxeles (nitidez + exposición) para filtrar candidatos
+function quickScore(vid,vw,vh){
+  var W=160,H=Math.round(vh*(W/vw));
+  var c=document.createElement('canvas');c.width=W;c.height=H;
+  var x=c.getContext('2d',{willReadFrequently:true});
+  x.drawImage(vid,0,0,W,H);
+  var d;
+  try{d=x.getImageData(0,0,W,H).data;}catch(e){return 0.5;}
+  var g=new Float32Array(W*H);
+  for(var i=0,p=0;i<d.length;i+=4,p++)g[p]=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
+  var ss=0,sc=0;
+  for(var y=1;y<H-1;y++)for(var xx=1;xx<W-1;xx++){var idx=y*W+xx,gx=g[idx+1]-g[idx-1],gy=g[idx+W]-g[idx-W];ss+=gx*gx+gy*gy;sc++;}
+  var sharp=sc?ss/sc:0;
+  var s=0;for(var i=0;i<g.length;i++)s+=g[i];
+  var m=s/g.length;
+  var exp=m<30?(m/30)*.4:m>220?Math.max(0,1-(m-220)/35):1;
+  return sharp*0.7+exp*0.3;
+}
+
+// Score con Claude Vision API
+async function aiScore(dataUrl){
+  var b64=dataUrl.split(',')[1];
+  var resp=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:'claude-sonnet-4-6',
+      max_tokens:300,
+      system:'Eres un director de fotografía y experto en looks de modelo para redes sociales. Evalúa fotos de personas honestamente. Responde SOLO con JSON válido, sin texto extra ni markdown.',
+      messages:[{role:'user',content:[
+        {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
+        {type:'text',text:'Evalúa esta foto del 0 al 100 en cada categoría. Sé honesto y varía los puntajes.\n\nResponde SOLO este JSON:\n{"simetria":80,"luz":75,"color":70,"angulo":85,"expresion":72,"total":76,"tip":"frase corta sobre qué hace buena o mala esta foto para IG, máx 10 palabras"}'}
+      ]}]
+    })
+  });
+  if(!resp.ok)throw new Error('API error '+resp.status);
+  var data=await resp.json();
+  var raw=data.content.filter(function(b){return b.type==='text';}).map(function(b){return b.text;}).join('');
+  var clean=raw.replace(/```json|```/g,'').trim();
+  try{return JSON.parse(clean);}catch(e){var m=clean.match(/\{[\s\S]*\}/);if(m)return JSON.parse(m[0]);throw new Error('Parse error');}
+}
+
+async function analyze(){
+  noErr();zone.style.display='none';proc.classList.add('show');results.classList.remove('show');cards.innerHTML='';
+  prog(0,'Cargando video…','');
+
+  var MAX_EXTRACT=35,CANDIDATES=parseInt(sl.value)*2+4,wanted=parseInt(sl.value);
+  var objUrl;
+  try{
+    objUrl=URL.createObjectURL(file);
+    var vid=document.createElement('video');
+    vid.src=objUrl;vid.muted=true;vid.playsInline=true;vid.preload='metadata';
+    vid.setAttribute('playsinline','');vid.setAttribute('webkit-playsinline','');
+    vid.style.cssText='position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;';
+    document.body.appendChild(vid);
+
+    await new Promise(function(res,rej){
+      var tid=setTimeout(function(){rej(new Error('Timeout cargando video.'));},25000);
+      vid.addEventListener('loadedmetadata',function(){clearTimeout(tid);res();},{once:true});
+      vid.addEventListener('error',function(){
+        clearTimeout(tid);
+        var ec=vid.error?vid.error.code:0;
+        var msgs={3:'El codec HEVC de este .mov no es compatible. Ve a Ajustes > Cámara > Formatos > "Más compatible" y graba un nuevo video.',4:'Formato no soportado. Prueba con un .mp4.'};
+        rej(new Error(msgs[ec]||'Error de video (código '+ec+'). Prueba con un .mp4.'));
+      },{once:true});
+      vid.load();
     });
-  }
 
-  function gray(data,w,h){
-    var g=new Float32Array(w*h);
-    for(var i=0,p=0;i<data.length;i+=4,p++)g[p]=0.299*data[i]+0.587*data[i+1]+0.114*data[i+2];
-    return g;
-  }
+    var dur=vid.duration,vw=vid.videoWidth,vh=vid.videoHeight;
+    prog(.06,'Video listo · '+vw+'×'+vh+'px · '+dur.toFixed(0)+'s','Extrayendo frames…');
+    await sleep(80);
+    await seekTo(vid,0.3);
 
-  function scoreFrame(imgData){
-    var w=imgData.width,h=imgData.height,data=imgData.data,g=gray(data,w,h);
-    var ss=0,sc=0;
-    for(var y=1;y<h-1;y++)for(var x=1;x<w-1;x++){var i=y*w+x,gx=g[i+1]-g[i-1],gy=g[i+w]-g[i-w];ss+=gx*gx+gy*gy;sc++;}
-    var sharp=sc?ss/sc:0;
-    var s=0;for(var i=0;i<g.length;i++)s+=g[i];
-    var m=s/g.length;
-    var exp=m<40?(m/40)*.3:m>215?Math.max(0,1-(m-215)/40):Math.max(0,1-Math.abs(m-128)/128*.4);
-    var cx=w/2,sp=Math.max(2,Math.round(w*.1)),st=Math.max(1,Math.round(w*.03)),y0=Math.round(h*.05),y1=Math.round(h*.85);
-    var best=Infinity;
-    for(var off=-sp;off<=sp;off+=st){var ax=cx+off,mo=Math.min(ax,w-ax)-2;if(mo<w*.15)continue;var d=0,n=0;for(var y=y0;y<y1;y+=2)for(var dx=4;dx<mo;dx+=2){var xl=Math.round(ax-dx),xr=Math.round(ax+dx);if(xl<0||xr>=w)continue;d+=Math.abs(g[y*w+xl]-g[y*w+xr]);n++;}if(n&&d/n<best)best=d/n;}
-    return{sharp:sharp,exp:exp,sym:Math.max(0,1-(isFinite(best)?best:60)/70)};
-  }
+    // Paso 1: extraer y puntuar rápido por píxeles
+    var margin=Math.min(1,dur*.06);
+    var step=Math.max(0.4,(dur-margin*2)/MAX_EXTRACT);
+    var times=[];
+    for(var t=margin;t<dur-margin;t+=step){if(times.length>=MAX_EXTRACT)break;times.push(parseFloat(t.toFixed(2)));}
+    if(!times.length)times.push(dur/2);
 
-  function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
-
-  goBtn.addEventListener('click',function(){if(file)analyze();});
-
-  async function analyze(){
-    noErr();
-    zone.style.display='none';
-    proc.classList.add('show');
-    results.classList.remove('show');
-    grid.innerHTML='';
-    prog(0,'Cargando video…','');
-
-    var MAX=40,W=200,objUrl;
-    try{
-      objUrl=URL.createObjectURL(file);
-      var vid=document.createElement('video');
-      vid.src=objUrl;
-      vid.muted=true;
-      vid.playsInline=true;
-      vid.preload='metadata';
-      vid.setAttribute('playsinline','');
-      vid.setAttribute('webkit-playsinline','');
-      vid.style.cssText='position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;';
-      document.body.appendChild(vid);
-
-      await new Promise(function(res,rej){
-        var tid=setTimeout(function(){rej(new Error('Timeout: el video tardó demasiado. ¿Está corrupto?'));},25000);
-        vid.addEventListener('loadedmetadata',function(){clearTimeout(tid);res();},{once:true});
-        vid.addEventListener('error',function(){
-          clearTimeout(tid);
-          var ec=vid.error?vid.error.code:0;
-          var msgs={1:'Carga cancelada',2:'Error de red',3:'Error decodificando — el codec HEVC de este .mov no es compatible en canvas de Safari. Cambia en Ajustes > Cámara > Formatos > "Más compatible" y graba un video nuevo.',4:'Formato no soportado — prueba con un .mp4'};
-          rej(new Error(msgs[ec]||'Error de video código '+ec));
-        },{once:true});
-        vid.load();
-      });
-
-      var dur=vid.duration,vw=vid.videoWidth,vh=vid.videoHeight;
-      prog(.08,'Video cargado ('+vw+'×'+vh+', '+dur.toFixed(1)+'s)','Iniciando análisis…');
-      await sleep(100);
-
-      // Despertar el decoder con un seek inicial
-      await seekTo(vid,0.5);
-
-      var margin=Math.min(1,dur*.05);
-      var step=Math.max(0.4,(dur-margin*2)/MAX);
-      var times=[];
-      for(var t=margin;t<dur-margin;t+=step){if(times.length>=MAX)break;times.push(parseFloat(t.toFixed(2)));}
-      if(!times.length)times.push(dur/2);
-
-      var ac=document.createElement('canvas');
-      ac.width=W;ac.height=Math.max(1,Math.round(vh*(W/vw)));
-      var ax=ac.getContext('2d',{willReadFrequently:true});
-
-      var scored=[];
-      for(var i=0;i<times.length;i++){
-        await seekTo(vid,times[i]);
-        ax.drawImage(vid,0,0,ac.width,ac.height);
-        var id;
-        try{id=ax.getImageData(0,0,ac.width,ac.height);}
-        catch(e){throw new Error('Error leyendo píxeles: '+e.message+'. El video puede tener protección DRM o el codec no es compatible con canvas.');}
-        var s=scoreFrame(id);
-        scored.push({t:times[i],sharp:s.sharp,exp:s.exp,sym:s.sym});
-        prog((i+1)/times.length*.82,'Analizando fotogramas…',(i+1)+' / '+times.length);
-        if(i%6===0)await sleep(0);
-      }
-
-      var sharps=scored.map(function(r){return r.sharp;});
-      var minS=Math.min.apply(null,sharps),maxS=Math.max.apply(null,sharps);
-      scored.forEach(function(r){r.sn=maxS>minS?(r.sharp-minS)/(maxS-minS):1;r.total=r.sym*.55+r.sn*.30+r.exp*.15;});
-      scored.sort(function(a,b){return b.total-a.total;});
-      var top=scored.slice(0,parseInt(sl.value));
-
-      prog(.85,'Exportando las mejores tomas…','');
-      var fc=document.createElement('canvas'),fctx=fc.getContext('2d');
-      var frames=[];
-      for(var i=0;i<top.length;i++){
-        var r=top[i];
-        await seekTo(vid,r.t);
-        var sx=0,sy=0,sw=vw,sh=vh;
-        if(square){var sz=Math.min(vw,vh);sx=Math.round((vw-sz)/2);sy=Math.max(0,Math.round((vh-sz)/2*.6));sw=sz;sh=sz;}
-        fc.width=sw;fc.height=sh;
-        fctx.drawImage(vid,sx,sy,sw,sh,0,0,sw,sh);
-        frames.push({url:fc.toDataURL('image/jpeg',.92),s:r.total});
-        prog(.85+.15*(i+1)/top.length,'Exportando…',(i+1)+'/'+top.length);
-      }
-      URL.revokeObjectURL(objUrl);vid.remove();
-      prog(1,'¡Listo!','');
-      render(frames);
-    }catch(e){
-      if(objUrl)URL.revokeObjectURL(objUrl);
-      proc.classList.remove('show');zone.style.display='';
-      showErr(e.message||'Error desconocido.');
+    var quickScored=[];
+    for(var i=0;i<times.length;i++){
+      await seekTo(vid,times[i]);
+      var qs=quickScore(vid,vw,vh);
+      quickScored.push({t:times[i],qs:qs});
+      prog(.06+.28*(i+1)/times.length,'Escaneando el video…',(i+1)+' / '+times.length+' fotogramas');
+      if(i%5===0)await sleep(0);
     }
-  }
 
-  function render(frames){
-    proc.classList.remove('show');results.classList.add('show');grid.innerHTML='';
-    frames.forEach(function(f,i){
-      var p=Math.round(f.s*100),card=document.createElement('div');
-      card.className='card'+(i===0?' best':'');
-      card.style.animationDelay=(i*.06)+'s';
-      card.innerHTML='<div class="thumb"><img src="'+f.url+'" loading="lazy"><span class="badge'+(i===0?' gold':'')+'">'+( i===0?'TOP':'#'+(i+1))+'</span></div><div class="cmeta"><div class="srow"><div class="sbar"><span style="width:'+p+'%"></span></div><span class="sval">'+p+'</span></div><div class="acts"><button data-dl>Guardar</button><button class="p" data-sh>Compartir</button></div></div>';
-      var nm='mejor-toma-'+(i+1)+'.jpg';
-      card.querySelector('[data-dl]').addEventListener('click',function(){var a=document.createElement('a');a.href=f.url;a.download=nm;document.body.appendChild(a);a.click();a.remove();});
-      card.querySelector('[data-sh]').addEventListener('click',async function(){
-        try{var bl=await(await fetch(f.url)).blob();var fi=new File([bl],nm,{type:'image/jpeg'});if(navigator.canShare&&navigator.canShare({files:[fi]})){await navigator.share({files:[fi],title:'Mi mejor toma'});return;}}
-        catch(e){if(e&&e.name==='AbortError')return;}
-        var a=document.createElement('a');a.href=f.url;a.download=nm;document.body.appendChild(a);a.click();a.remove();
-      });
-      grid.appendChild(card);
+    // Elegir los mejores candidatos por pixel score
+    quickScored.sort(function(a,b){return b.qs-a.qs;});
+    var candidates=quickScored.slice(0,Math.min(CANDIDATES,quickScored.length));
+    // Ordenar cronológicamente para que la selección sea variada
+    candidates.sort(function(a,b){return a.t-b.t;});
+
+    // Paso 2: capturar frames de los candidatos
+    prog(.34,'Capturando fotogramas…','');
+    var captured=[];
+    for(var i=0;i<candidates.length;i++){
+      await seekTo(vid,candidates[i].t);
+      var apiUrl=frameToDataURL(vid,vw,vh,square,0.78);
+      var fullUrl=frameFullRes(vid,vw,vh,square);
+      captured.push({t:candidates[i].t,apiUrl:apiUrl,fullUrl:fullUrl});
+      prog(.34+.1*(i+1)/candidates.length,'Capturando fotogramas…',(i+1)+'/'+candidates.length);
+    }
+    URL.revokeObjectURL(objUrl);vid.remove();
+
+    // Paso 3: análisis de IA en paralelo (lotes de 3)
+    prog(.46,'Analizando con IA…','Evaluando simetría, luz, color y ángulo');
+    var scored=[];
+    var BATCH=3;
+    for(var i=0;i<captured.length;i+=BATCH){
+      var batch=captured.slice(i,i+BATCH);
+      var batchResults=await Promise.all(batch.map(async function(fr){
+        try{var ai=await aiScore(fr.apiUrl);return{fullUrl:fr.fullUrl,ai:ai};}
+        catch(e){return null;}
+      }));
+      batchResults.forEach(function(r){if(r)scored.push(r);});
+      prog(.46+.48*(Math.min(i+BATCH,captured.length)/captured.length),'Analizando con IA…',Math.min(i+BATCH,captured.length)+' / '+captured.length);
+      if(i+BATCH<captured.length)await sleep(200);
+    }
+
+    if(!scored.length)throw new Error('No se pudieron analizar los fotogramas con IA.');
+    scored.sort(function(a,b){return b.ai.total-a.ai.total;});
+    prog(1,'¡Listo!','');
+    render(scored.slice(0,wanted));
+
+  }catch(e){
+    if(objUrl)URL.revokeObjectURL(objUrl);
+    proc.classList.remove('show');zone.style.display='';
+    showErr(e.message||'Error desconocido.');
+  }
+}
+
+function render(items){
+  proc.classList.remove('show');results.classList.add('show');cards.innerHTML='';
+  var cats=[
+    {key:'simetria',label:'Simetría'},
+    {key:'luz',label:'Luz'},
+    {key:'color',label:'Color'},
+    {key:'angulo',label:'Ángulo'},
+    {key:'expresion',label:'Expresión'},
+  ];
+  items.forEach(function(item,i){
+    var ai=item.ai;
+    var card=document.createElement('div');
+    card.className='card'+(i===0?' best':'');
+    card.style.animationDelay=(i*.07)+'s';
+    var rows=cats.map(function(c){
+      return '<div class="srow"><span class="slabel">'+c.label+'</span><div class="sbar"><span style="width:'+(ai[c.key]||0)+'%"></span></div><span class="sval">'+(ai[c.key]||0)+'</span></div>';
+    }).join('');
+    card.innerHTML=
+      '<div class="thumb"><img src="'+item.fullUrl+'" loading="lazy"><span class="badge'+(i===0?' gold':'')+'">'+( i===0?'TOP':'#'+(i+1))+'</span></div>'+
+      '<div class="cbody">'+
+        '<div class="scores">'+rows+'</div>'+
+        (ai.tip?'<p class="tip">"'+ai.tip+'"</p>':'')+
+        '<div class="acts"><button data-dl>Guardar</button><button class="p" data-sh>Compartir</button></div>'+
+      '</div>';
+    var nm='mejor-toma-'+(i+1)+'.jpg';
+    card.querySelector('[data-dl]').addEventListener('click',function(){var a=document.createElement('a');a.href=item.fullUrl;a.download=nm;document.body.appendChild(a);a.click();a.remove();});
+    card.querySelector('[data-sh]').addEventListener('click',async function(){
+      try{var bl=await(await fetch(item.fullUrl)).blob();var fi=new File([bl],nm,{type:'image/jpeg'});if(navigator.canShare&&navigator.canShare({files:[fi]})){await navigator.share({files:[fi],title:'Mi mejor toma'});return;}}
+      catch(e){if(e&&e.name==='AbortError')return;}
+      var a=document.createElement('a');a.href=item.fullUrl;a.download=nm;document.body.appendChild(a);a.click();a.remove();
     });
-  }
+    cards.appendChild(card);
+  });
+}
 
-  again.addEventListener('click',function(){file=null;fileIn.value='';pinfo.classList.remove('show');results.classList.remove('show');zone.style.display='';noErr();});
+goBtn.addEventListener('click',function(){if(file)analyze();});
+again.addEventListener('click',function(){file=null;fileIn.value='';pinfo.classList.remove('show');results.classList.remove('show');zone.style.display='';noErr();});
 })();
 </script>
 </body>
