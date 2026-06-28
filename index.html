@@ -43,29 +43,30 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 .bw{width:100%;background:var(--line);border-radius:99px;height:3px;margin-top:16px;overflow:hidden;}
 .bf{height:100%;background:var(--rust);border-radius:99px;width:0%;transition:width .3s ease-out;}
 .bp{font-size:.75rem;color:var(--ink3);margin-top:6px;}
-/* results */
 .results{display:none;}
 .results.show{display:block;}
 .rh{display:flex;align-items:baseline;justify-content:space-between;margin:32px 0 16px;}
 .rh h2{font-family:'Fraunces',serif;font-style:italic;font-weight:300;font-size:1.4rem;}
 .again{background:none;border:none;font-family:inherit;font-size:.78rem;color:var(--ink3);cursor:pointer;text-decoration:underline;}
 .cards{display:flex;flex-direction:column;gap:14px;}
-.card{background:var(--white);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;gap:0;opacity:0;transform:translateY(8px);animation:up .5s cubic-bezier(.16,1,.3,1) forwards;}
+.card{background:var(--white);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;opacity:0;transform:translateY(8px);animation:up .5s cubic-bezier(.16,1,.3,1) forwards;}
 .card.best{border-color:var(--gold);}
 @keyframes up{to{opacity:1;transform:translateY(0);}}
-.thumb{width:120px;flex-shrink:0;position:relative;background:var(--bg2);}
+.thumb{width:115px;flex-shrink:0;position:relative;background:var(--bg2);}
 .thumb img{display:block;width:100%;height:100%;object-fit:cover;}
 .badge{position:absolute;top:8px;left:8px;font-size:.65rem;font-weight:700;padding:3px 8px;border-radius:99px;background:var(--ink);color:var(--bg);}
 .badge.gold{background:var(--gold);color:var(--ink);}
-.cbody{padding:12px 14px;flex:1;display:flex;flex-direction:column;justify-content:space-between;min-width:0;}
+.cbody{padding:12px 13px;flex:1;display:flex;flex-direction:column;justify-content:space-between;min-width:0;}
 .scores{display:flex;flex-direction:column;gap:5px;margin-bottom:8px;}
-.srow{display:flex;align-items:center;gap:7px;}
-.slabel{font-size:.68rem;color:var(--ink3);width:68px;flex-shrink:0;}
+.srow{display:flex;align-items:center;gap:6px;}
+.slabel{font-size:.67rem;color:var(--ink3);width:66px;flex-shrink:0;}
 .sbar{flex:1;height:3px;background:var(--bg2);border-radius:99px;overflow:hidden;}
-.sbar span{display:block;height:100%;background:var(--rust);border-radius:99px;transition:width .6s ease-out;}
-.sval{font-size:.68rem;font-weight:700;color:var(--rust2);width:24px;text-align:right;flex-shrink:0;}
-.tip{font-size:.74rem;color:var(--ink2);font-style:italic;line-height:1.4;border-top:1px solid var(--line);padding-top:7px;margin-top:2px;}
-.acts{display:flex;gap:6px;margin-top:8px;}
+.sbar span{display:block;height:100%;border-radius:99px;}
+.sbar span.high{background:#4caf50;}
+.sbar span.mid{background:var(--rust);}
+.sbar span.low{background:#e0a090;}
+.sval{font-size:.67rem;font-weight:700;color:var(--rust2);width:24px;text-align:right;flex-shrink:0;}
+.acts{display:flex;gap:6px;}
 .acts button{flex:1;font-family:inherit;font-size:.7rem;font-weight:600;padding:7px 0;border-radius:9px;border:1px solid var(--line);background:transparent;color:var(--ink2);cursor:pointer;}
 .acts button.p{background:var(--ink);color:var(--bg);border-color:var(--ink);}
 .err{display:none;margin-top:12px;padding:12px 14px;background:var(--rust-pale);border:1px solid #e0a090;color:var(--rust2);border-radius:10px;font-size:.82rem;line-height:1.5;}
@@ -75,9 +76,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 </head>
 <body>
 <div class="page">
-  <span class="tag">Selector de fotogramas · IA</span>
+  <span class="tag">Selector de fotogramas</span>
   <h1>Tu mejor <em>ángulo</em></h1>
-  <p class="sub">La IA analiza cada momento del video: simetría facial, luz, color, ángulo y expresión — y elige las tomas donde te ves como modelo.</p>
+  <p class="sub">Analiza cada momento del video: simetría facial, luz, color y nitidez — elige las tomas donde te ves como modelo.</p>
 
   <div class="box" id="zone">
     <p>Elige un video desde tu galería</p>
@@ -90,22 +91,22 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       <div class="fm" id="fm"></div>
       <div class="controls">
         <div class="row">
-          <label>Fotos a mostrar: <strong id="slv">6</strong></label>
-          <input type="range" id="sl" min="3" max="10" value="6">
+          <label>Fotos a mostrar: <strong id="slv">8</strong></label>
+          <input type="range" id="sl" min="3" max="12" value="8">
         </div>
         <div class="row">
           <label>Recorte cuadrado (IG)</label>
           <button id="sqt" class="tog" type="button"></button>
         </div>
       </div>
-      <button class="go" id="goBtn">Analizar con IA</button>
+      <button class="go" id="goBtn">Analizar video</button>
     </div>
     <div class="err" id="errBox"></div>
   </div>
 
   <div class="proc" id="proc">
     <div class="ring"></div>
-    <p class="pt" id="pt">Extrayendo fotogramas…</p>
+    <p class="pt" id="pt">Analizando…</p>
     <p class="ps" id="ps"></p>
     <div class="bw"><div class="bf" id="bf"></div></div>
     <p class="bp" id="bp">0%</p>
@@ -117,7 +118,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       <button class="again" id="again">analizar otro</button>
     </div>
     <div class="cards" id="cards"></div>
-    <p class="note">Análisis de IA basado en simetría facial, luz, color, ángulo y expresión. El orden es una guía — tú eliges cuál te gusta más.</p>
+    <p class="note">Análisis por píxeles: simetría, luz, saturación de color y nitidez. Sin IA externa — todo corre en tu dispositivo.</p>
   </div>
 </div>
 <script>
@@ -141,7 +142,7 @@ function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
 
 fileIn.addEventListener('change',function(e){
   var f=e.target.files&&e.target.files[0];
-  if(!f){showErr('No se seleccionó ningún archivo.');return;}
+  if(!f)return;
   noErr();file=f;
   fnEl.textContent=f.name;
   fmEl.textContent=(f.size/1024/1024).toFixed(1)+' MB ✓';
@@ -150,82 +151,109 @@ fileIn.addEventListener('change',function(e){
 
 function seekTo(vid,t){
   return new Promise(function(res){
-    var done=false;
-    var id=setTimeout(function(){if(!done){done=true;vid.removeEventListener('seeked',h);res();}},2500);
+    var done=false,id=setTimeout(function(){if(!done){done=true;vid.removeEventListener('seeked',h);res();}},2500);
     function h(){if(done)return;done=true;clearTimeout(id);vid.removeEventListener('seeked',h);res();}
-    vid.addEventListener('seeked',h);
-    vid.currentTime=t;
+    vid.addEventListener('seeked',h);vid.currentTime=t;
   });
 }
 
-// Extrae frame como dataURL (jpeg comprimido para API)
-function frameToDataURL(vid,vw,vh,sq,quality){
-  var sx=0,sy=0,sw=vw,sh=vh;
-  if(sq){var sz=Math.min(vw,vh);sx=Math.round((vw-sz)/2);sy=Math.max(0,Math.round((vh-sz)/2*.6));sw=sz;sh=sz;}
-  var c=document.createElement('canvas');
-  // Para análisis de IA usamos 512px max
-  var scale=Math.min(1,512/Math.max(sw,sh));
-  c.width=Math.round(sw*scale);c.height=Math.round(sh*scale);
-  c.getContext('2d').drawImage(vid,sx,sy,sw,sh,0,0,c.width,c.height);
-  return c.toDataURL('image/jpeg',quality||0.75);
-}
+function analyzePixels(data,w,h){
+  // --- Luminancia ---
+  var lum=new Float32Array(w*h);
+  var R=new Float32Array(w*h),G=new Float32Array(w*h),B=new Float32Array(w*h);
+  for(var i=0,p=0;i<data.length;i+=4,p++){
+    R[p]=data[i]/255;G[p]=data[i+1]/255;B[p]=data[i+2]/255;
+    lum[p]=0.299*R[p]+0.587*G[p]+0.114*B[p];
+  }
 
-// Extrae frame full res para guardar
-function frameFullRes(vid,vw,vh,sq){
-  var sx=0,sy=0,sw=vw,sh=vh;
-  if(sq){var sz=Math.min(vw,vh);sx=Math.round((vw-sz)/2);sy=Math.max(0,Math.round((vh-sz)/2*.6));sw=sz;sh=sz;}
-  var c=document.createElement('canvas');c.width=sw;c.height=sh;
-  c.getContext('2d').drawImage(vid,sx,sy,sw,sh,0,0,sw,sh);
-  return c.toDataURL('image/jpeg',0.92);
-}
+  // --- Nitidez (energía Laplaciana) ---
+  var lapSum=0,lapN=0;
+  for(var y=1;y<h-1;y++)for(var x=1;x<w-1;x++){
+    var i=y*w+x;
+    var lap=4*lum[i]-lum[i-1]-lum[i+1]-lum[i-w]-lum[i+w];
+    lapSum+=lap*lap;lapN++;
+  }
+  var sharpness=lapN?Math.min(1,lapSum/lapN/0.01):0;
 
-// Score rápido por píxeles (nitidez + exposición) para filtrar candidatos
-function quickScore(vid,vw,vh){
-  var W=160,H=Math.round(vh*(W/vw));
-  var c=document.createElement('canvas');c.width=W;c.height=H;
-  var x=c.getContext('2d',{willReadFrequently:true});
-  x.drawImage(vid,0,0,W,H);
-  var d;
-  try{d=x.getImageData(0,0,W,H).data;}catch(e){return 0.5;}
-  var g=new Float32Array(W*H);
-  for(var i=0,p=0;i<d.length;i+=4,p++)g[p]=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
-  var ss=0,sc=0;
-  for(var y=1;y<H-1;y++)for(var xx=1;xx<W-1;xx++){var idx=y*W+xx,gx=g[idx+1]-g[idx-1],gy=g[idx+W]-g[idx-W];ss+=gx*gx+gy*gy;sc++;}
-  var sharp=sc?ss/sc:0;
-  var s=0;for(var i=0;i<g.length;i++)s+=g[i];
-  var m=s/g.length;
-  var exp=m<30?(m/30)*.4:m>220?Math.max(0,1-(m-220)/35):1;
-  return sharp*0.7+exp*0.3;
-}
+  // --- Luz (exposición) ---
+  var lumMean=0;for(var i=0;i<lum.length;i++)lumMean+=lum[i];lumMean/=lum.length;
+  var lumVar=0;for(var i=0;i<lum.length;i++)lumVar+=(lum[i]-lumMean)*(lum[i]-lumMean);lumVar/=lum.length;
+  var contrast=Math.sqrt(lumVar);
+  // Buena luz: media entre 0.35-0.70 y buen contraste
+  var lumScore=lumMean<0.15?lumMean/0.15*0.3:lumMean>0.85?Math.max(0,1-(lumMean-0.85)/0.15):1-Math.abs(lumMean-0.50)/0.50*0.35;
+  var contrastScore=Math.min(1,contrast/0.18);
+  var luz=lumScore*0.6+contrastScore*0.4;
 
-// Score con Claude Vision API
-async function aiScore(dataUrl){
-  var b64=dataUrl.split(',')[1];
-  var resp=await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      model:'claude-sonnet-4-6',
-      max_tokens:300,
-      system:'Eres un director de fotografía y experto en looks de modelo para redes sociales. Evalúa fotos de personas honestamente. Responde SOLO con JSON válido, sin texto extra ni markdown.',
-      messages:[{role:'user',content:[
-        {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
-        {type:'text',text:'Evalúa esta foto del 0 al 100 en cada categoría. Sé honesto y varía los puntajes.\n\nResponde SOLO este JSON:\n{"simetria":80,"luz":75,"color":70,"angulo":85,"expresion":72,"total":76,"tip":"frase corta sobre qué hace buena o mala esta foto para IG, máx 10 palabras"}'}
-      ]}]
-    })
-  });
-  if(!resp.ok)throw new Error('API error '+resp.status);
-  var data=await resp.json();
-  var raw=data.content.filter(function(b){return b.type==='text';}).map(function(b){return b.text;}).join('');
-  var clean=raw.replace(/```json|```/g,'').trim();
-  try{return JSON.parse(clean);}catch(e){var m=clean.match(/\{[\s\S]*\}/);if(m)return JSON.parse(m[0]);throw new Error('Parse error');}
+  // --- Color (saturación promedio + warmth) ---
+  var satSum=0,warmSum=0;
+  for(var i=0;i<w*h;i++){
+    var r=R[i],g=G[i],b=B[i];
+    var mx=Math.max(r,g,b),mn=Math.min(r,g,b);
+    var sat=mx>0?(mx-mn)/mx:0;
+    satSum+=sat;
+    warmSum+=(r-b+1)/2; // warmth: rojo>azul
+  }
+  var satMean=satSum/(w*h);
+  var warmMean=warmSum/(w*h);
+  // Buena saturación: 0.2-0.6; warmth suave
+  var satScore=satMean<0.1?satMean/0.1*0.4:satMean>0.7?Math.max(0.3,1-(satMean-0.7)/0.3):1-Math.abs(satMean-0.35)/0.35*0.3;
+  var warmScore=Math.max(0,1-Math.abs(warmMean-0.55)/0.35);
+  var color=satScore*0.65+warmScore*0.35;
+
+  // --- Simetría (comparación espejo en zona central) ---
+  var cx=Math.round(w/2);
+  var span=Math.max(4,Math.round(w*0.12)),step=Math.max(1,Math.round(w*0.04));
+  var y0=Math.round(h*0.04),y1=Math.round(h*0.82);
+  var bestSym=0;
+  for(var off=-span;off<=span;off+=step){
+    var ax=cx+off,mo=Math.min(ax,w-ax)-2;
+    if(mo<w*0.18)continue;
+    var diff=0,n=0;
+    for(var y=y0;y<y1;y+=2){
+      for(var dx=6;dx<mo;dx+=3){
+        var xl=Math.round(ax-dx),xr=Math.round(ax+dx);
+        if(xl<0||xr>=w)continue;
+        diff+=Math.abs(lum[y*w+xl]-lum[y*w+xr]);
+        n++;
+      }
+    }
+    if(n>0){var s=Math.max(0,1-diff/n/0.25);if(s>bestSym)bestSym=s;}
+  }
+  var simetria=bestSym;
+
+  // --- Angulo/Encuadre: sujeto centrado y bien distribuido ---
+  // Comparar brillo izq vs der y arriba vs abajo
+  var leftLum=0,rightLum=0,topLum=0,botLum=0,cnt=0;
+  for(var y=0;y<h;y++)for(var x=0;x<w;x++){
+    var v=lum[y*w+x];
+    if(x<w/2)leftLum+=v;else rightLum+=v;
+    if(y<h/2)topLum+=v;else botLum+=v;
+    cnt++;
+  }
+  var half=cnt/2;
+  var hBalance=1-Math.abs(leftLum-rightLum)/half;
+  var vBalance=1-Math.abs(topLum-botLum)/half*0.5;
+  // Buen ángulo: sujeto principal en tercio superior-central
+  var angulo=Math.max(0,Math.min(1,(hBalance*0.55+vBalance*0.45)));
+
+  // --- Score total ponderado ---
+  var total=simetria*0.30+luz*0.25+color*0.20+sharpness*0.15+angulo*0.10;
+
+  return{
+    simetria:Math.round(simetria*100),
+    luz:Math.round(luz*100),
+    color:Math.round(color*100),
+    nitidez:Math.round(sharpness*100),
+    angulo:Math.round(angulo*100),
+    total:total
+  };
 }
 
 async function analyze(){
   noErr();zone.style.display='none';proc.classList.add('show');results.classList.remove('show');cards.innerHTML='';
   prog(0,'Cargando video…','');
 
-  var MAX_EXTRACT=35,CANDIDATES=parseInt(sl.value)*2+4,wanted=parseInt(sl.value);
+  var MAX=50,wanted=parseInt(sl.value);
   var objUrl;
   try{
     objUrl=URL.createObjectURL(file);
@@ -236,76 +264,64 @@ async function analyze(){
     document.body.appendChild(vid);
 
     await new Promise(function(res,rej){
-      var tid=setTimeout(function(){rej(new Error('Timeout cargando video.'));},25000);
+      var tid=setTimeout(function(){rej(new Error('Timeout cargando el video.'));},25000);
       vid.addEventListener('loadedmetadata',function(){clearTimeout(tid);res();},{once:true});
       vid.addEventListener('error',function(){
         clearTimeout(tid);
         var ec=vid.error?vid.error.code:0;
-        var msgs={3:'El codec HEVC de este .mov no es compatible. Ve a Ajustes > Cámara > Formatos > "Más compatible" y graba un nuevo video.',4:'Formato no soportado. Prueba con un .mp4.'};
-        rej(new Error(msgs[ec]||'Error de video (código '+ec+'). Prueba con un .mp4.'));
+        var m={3:'El codec HEVC de este .mov no es compatible con Safari canvas. Ve a Ajustes → Cámara → Formatos → "Más compatible" y graba un nuevo video.',4:'Formato no soportado. Prueba con un .mp4.'};
+        rej(new Error(m[ec]||'Error de video código '+ec+'. Prueba con un .mp4.'));
       },{once:true});
       vid.load();
     });
 
     var dur=vid.duration,vw=vid.videoWidth,vh=vid.videoHeight;
-    prog(.06,'Video listo · '+vw+'×'+vh+'px · '+dur.toFixed(0)+'s','Extrayendo frames…');
+    prog(.06,'Video cargado · '+vw+'×'+vh+' · '+Math.round(dur)+'s','');
     await sleep(80);
     await seekTo(vid,0.3);
 
-    // Paso 1: extraer y puntuar rápido por píxeles
-    var margin=Math.min(1,dur*.06);
-    var step=Math.max(0.4,(dur-margin*2)/MAX_EXTRACT);
+    var W=220,H=Math.round(vh*(W/vw));
+    var ac=document.createElement('canvas');ac.width=W;ac.height=H;
+    var ax=ac.getContext('2d',{willReadFrequently:true});
+
+    var margin=Math.min(1,dur*.05);
+    var step=Math.max(0.3,(dur-margin*2)/MAX);
     var times=[];
-    for(var t=margin;t<dur-margin;t+=step){if(times.length>=MAX_EXTRACT)break;times.push(parseFloat(t.toFixed(2)));}
+    for(var t=margin;t<dur-margin;t+=step){if(times.length>=MAX)break;times.push(parseFloat(t.toFixed(2)));}
     if(!times.length)times.push(dur/2);
 
-    var quickScored=[];
+    var scored=[];
     for(var i=0;i<times.length;i++){
       await seekTo(vid,times[i]);
-      var qs=quickScore(vid,vw,vh);
-      quickScored.push({t:times[i],qs:qs});
-      prog(.06+.28*(i+1)/times.length,'Escaneando el video…',(i+1)+' / '+times.length+' fotogramas');
-      if(i%5===0)await sleep(0);
+      ax.drawImage(vid,0,0,W,H);
+      var id;
+      try{id=ax.getImageData(0,0,W,H);}
+      catch(e){throw new Error('Error leyendo píxeles: '+e.message+'. El codec HEVC no es compatible con canvas en Safari. Ve a Ajustes → Cámara → Formatos → "Más compatible".');}
+      var s=analyzePixels(id.data,W,H);
+      scored.push({t:times[i],scores:s});
+      prog(.08+(i+1)/times.length*.78,'Analizando simetría, luz y color…',(i+1)+' / '+times.length);
+      if(i%6===0)await sleep(0);
     }
 
-    // Elegir los mejores candidatos por pixel score
-    quickScored.sort(function(a,b){return b.qs-a.qs;});
-    var candidates=quickScored.slice(0,Math.min(CANDIDATES,quickScored.length));
-    // Ordenar cronológicamente para que la selección sea variada
-    candidates.sort(function(a,b){return a.t-b.t;});
+    scored.sort(function(a,b){return b.scores.total-a.scores.total;});
+    var top=scored.slice(0,wanted);
 
-    // Paso 2: capturar frames de los candidatos
-    prog(.34,'Capturando fotogramas…','');
-    var captured=[];
-    for(var i=0;i<candidates.length;i++){
-      await seekTo(vid,candidates[i].t);
-      var apiUrl=frameToDataURL(vid,vw,vh,square,0.78);
-      var fullUrl=frameFullRes(vid,vw,vh,square);
-      captured.push({t:candidates[i].t,apiUrl:apiUrl,fullUrl:fullUrl});
-      prog(.34+.1*(i+1)/candidates.length,'Capturando fotogramas…',(i+1)+'/'+candidates.length);
+    prog(.88,'Exportando mejores tomas…','');
+    var fc=document.createElement('canvas'),fctx=fc.getContext('2d');
+    var frames=[];
+    for(var i=0;i<top.length;i++){
+      var r=top[i];
+      await seekTo(vid,r.t);
+      var sx=0,sy=0,sw=vw,sh=vh;
+      if(square){var sz=Math.min(vw,vh);sx=Math.round((vw-sz)/2);sy=Math.max(0,Math.round((vh-sz)/2*.55));sw=sz;sh=sz;}
+      fc.width=sw;fc.height=sh;
+      fctx.drawImage(vid,sx,sy,sw,sh,0,0,sw,sh);
+      frames.push({url:fc.toDataURL('image/jpeg',.93),scores:r.scores});
+      prog(.88+.12*(i+1)/top.length,'Exportando…',(i+1)+'/'+top.length);
     }
     URL.revokeObjectURL(objUrl);vid.remove();
-
-    // Paso 3: análisis de IA en paralelo (lotes de 3)
-    prog(.46,'Analizando con IA…','Evaluando simetría, luz, color y ángulo');
-    var scored=[];
-    var BATCH=3;
-    for(var i=0;i<captured.length;i+=BATCH){
-      var batch=captured.slice(i,i+BATCH);
-      var batchResults=await Promise.all(batch.map(async function(fr){
-        try{var ai=await aiScore(fr.apiUrl);return{fullUrl:fr.fullUrl,ai:ai};}
-        catch(e){return null;}
-      }));
-      batchResults.forEach(function(r){if(r)scored.push(r);});
-      prog(.46+.48*(Math.min(i+BATCH,captured.length)/captured.length),'Analizando con IA…',Math.min(i+BATCH,captured.length)+' / '+captured.length);
-      if(i+BATCH<captured.length)await sleep(200);
-    }
-
-    if(!scored.length)throw new Error('No se pudieron analizar los fotogramas con IA.');
-    scored.sort(function(a,b){return b.ai.total-a.ai.total;});
     prog(1,'¡Listo!','');
-    render(scored.slice(0,wanted));
-
+    render(frames);
   }catch(e){
     if(objUrl)URL.revokeObjectURL(objUrl);
     proc.classList.remove('show');zone.style.display='';
@@ -313,36 +329,35 @@ async function analyze(){
   }
 }
 
-function render(items){
+function barClass(v){return v>=70?'high':v>=45?'mid':'low';}
+
+function render(frames){
   proc.classList.remove('show');results.classList.add('show');cards.innerHTML='';
   var cats=[
     {key:'simetria',label:'Simetría'},
     {key:'luz',label:'Luz'},
     {key:'color',label:'Color'},
+    {key:'nitidez',label:'Nitidez'},
     {key:'angulo',label:'Ángulo'},
-    {key:'expresion',label:'Expresión'},
   ];
-  items.forEach(function(item,i){
-    var ai=item.ai;
-    var card=document.createElement('div');
+  frames.forEach(function(f,i){
+    var s=f.scores,card=document.createElement('div');
     card.className='card'+(i===0?' best':'');
     card.style.animationDelay=(i*.07)+'s';
     var rows=cats.map(function(c){
-      return '<div class="srow"><span class="slabel">'+c.label+'</span><div class="sbar"><span style="width:'+(ai[c.key]||0)+'%"></span></div><span class="sval">'+(ai[c.key]||0)+'</span></div>';
+      var v=s[c.key]||0;
+      return '<div class="srow"><span class="slabel">'+c.label+'</span><div class="sbar"><span class="'+barClass(v)+'" style="width:'+v+'%"></span></div><span class="sval">'+v+'</span></div>';
     }).join('');
     card.innerHTML=
-      '<div class="thumb"><img src="'+item.fullUrl+'" loading="lazy"><span class="badge'+(i===0?' gold':'')+'">'+( i===0?'TOP':'#'+(i+1))+'</span></div>'+
-      '<div class="cbody">'+
-        '<div class="scores">'+rows+'</div>'+
-        (ai.tip?'<p class="tip">"'+ai.tip+'"</p>':'')+
-        '<div class="acts"><button data-dl>Guardar</button><button class="p" data-sh>Compartir</button></div>'+
-      '</div>';
+      '<div class="thumb"><img src="'+f.url+'" loading="lazy"><span class="badge'+(i===0?' gold':'')+'">'+( i===0?'TOP':'#'+(i+1))+'</span></div>'+
+      '<div class="cbody"><div class="scores">'+rows+'</div>'+
+      '<div class="acts"><button data-dl>Guardar</button><button class="p" data-sh>Compartir</button></div></div>';
     var nm='mejor-toma-'+(i+1)+'.jpg';
-    card.querySelector('[data-dl]').addEventListener('click',function(){var a=document.createElement('a');a.href=item.fullUrl;a.download=nm;document.body.appendChild(a);a.click();a.remove();});
+    card.querySelector('[data-dl]').addEventListener('click',function(){var a=document.createElement('a');a.href=f.url;a.download=nm;document.body.appendChild(a);a.click();a.remove();});
     card.querySelector('[data-sh]').addEventListener('click',async function(){
-      try{var bl=await(await fetch(item.fullUrl)).blob();var fi=new File([bl],nm,{type:'image/jpeg'});if(navigator.canShare&&navigator.canShare({files:[fi]})){await navigator.share({files:[fi],title:'Mi mejor toma'});return;}}
+      try{var bl=await(await fetch(f.url)).blob();var fi=new File([bl],nm,{type:'image/jpeg'});if(navigator.canShare&&navigator.canShare({files:[fi]})){await navigator.share({files:[fi],title:'Mi mejor toma'});return;}}
       catch(e){if(e&&e.name==='AbortError')return;}
-      var a=document.createElement('a');a.href=item.fullUrl;a.download=nm;document.body.appendChild(a);a.click();a.remove();
+      var a=document.createElement('a');a.href=f.url;a.download=nm;document.body.appendChild(a);a.click();a.remove();
     });
     cards.appendChild(card);
   });
