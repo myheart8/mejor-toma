@@ -59,7 +59,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 .cbody{padding:12px 13px;flex:1;display:flex;flex-direction:column;justify-content:space-between;min-width:0;}
 .scores{display:flex;flex-direction:column;gap:5px;margin-bottom:8px;}
 .srow{display:flex;align-items:center;gap:6px;}
-.slabel{font-size:.67rem;color:var(--ink3);width:66px;flex-shrink:0;}
+.slabel{font-size:.67rem;color:var(--ink3);width:74px;flex-shrink:0;}
 .sbar{flex:1;height:3px;background:var(--bg2);border-radius:99px;overflow:hidden;}
 .sbar span{display:block;height:100%;border-radius:99px;}
 .sbar span.hi{background:#4caf50;}
@@ -78,7 +78,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 <div class="page">
   <span class="tag">Selector de fotogramas</span>
   <h1>Tu mejor <em>ángulo</em></h1>
-  <p class="sub">Analiza todo el video buscando los momentos donde estás de pie, con buena luz, cara centrada y expresión tipo revista.</p>
+  <p class="sub">Detecta los momentos donde tu cara está centrada arriba, el cuerpo visible abajo y el ángulo es selfie de modelo — no acostado, no de lado.</p>
 
   <div class="box" id="zone">
     <p>Elige un video desde tu galería</p>
@@ -118,7 +118,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       <button class="again" id="again">analizar otro</button>
     </div>
     <div class="cards" id="cards"></div>
-    <p class="note">Análisis por píxeles: postura, simetría, luz, color y nitidez — todo en tu dispositivo, sin enviar datos.</p>
+    <p class="note">Análisis por píxeles calibrado para selfies tipo modelo: cara arriba centrada, cuerpo abajo, ángulo erguido.</p>
   </div>
 </div>
 <script>
@@ -157,114 +157,173 @@ function seekTo(vid,t){
   });
 }
 
-function analyzePixels(data,w,h){
-  // Precalcular canales RGB y luminancia
+function isSkin(r,g,b){
+  // Detección de piel para distintos tonos de piel morena/clara
+  return r>0.28&&g>0.13&&b>0.04&&
+    Math.max(r,g,b)-Math.min(r,g,b)>0.045&&
+    r>g&&r>=b&&(r-g)>0.035&&r>0.30;
+}
+
+function analyzeFrame(data,w,h){
   var R=new Float32Array(w*h),G=new Float32Array(w*h),B=new Float32Array(w*h),L=new Float32Array(w*h);
   for(var i=0,p=0;i<data.length;i+=4,p++){
     R[p]=data[i]/255;G[p]=data[i+1]/255;B[p]=data[i+2]/255;
     L[p]=0.299*R[p]+0.587*G[p]+0.114*B[p];
   }
 
-  // --- NITIDEZ: Laplaciano ---
+  // === 1. ENCUADRE / ÁNGULO DE MODELO ===
+  // Detectar piel y calcular su distribución espacial
+  var skinPx=[],skinCx=0,skinCy=0,skinN=0;
+  for(var y=0;y<h;y++){
+    for(var x=0;x<w;x++){
+      var i=y*w+x;
+      if(isSkin(R[i],G[i],B[i])){
+        skinCx+=x;skinCy+=y;skinN++;
+        skinPx.push({x:x,y:y});
+      }
+    }
+  }
+
+  var encuadre=0.25; // default bajo
+  if(skinN>w*h*0.025){
+    skinCx/=skinN;skinCy/=skinN;
+
+    // Varianza X e Y para detectar orientación
+    var varX=0,varY=0;
+    for(var i=0;i<skinPx.length;i++){
+      varX+=(skinPx[i].x-skinCx)*(skinPx[i].x-skinCx);
+      varY+=(skinPx[i].y-skinCy)*(skinPx[i].y-skinCy);
+    }
+    varX/=skinN;varY/=skinN;
+
+    // ORIENTACIÓN: varY > varX → persona vertical (de pie/sentado erguido)
+    // varX > varY → persona acostada de lado → penalizar
+    var orientRatio=varY/(varX+varY+1e-6);
+    // orientRatio > 0.5 = más vertical (bien), < 0.5 = más horizontal (mal)
+    var orientScore=Math.max(0,Math.min(1,(orientRatio-0.35)/0.40));
+
+    // ALTURA DEL CENTROIDE: cara debe estar en tercio superior (cy < h*0.45)
+    // Zona ideal: cy entre 20%-45% de la altura
+    var relCy=skinCy/h;
+    var heightScore;
+    if(relCy<0.15)heightScore=0.4; // demasiado arriba (solo frente)
+    else if(relCy<0.45)heightScore=1.0; // zona ideal: cara arriba + cuerpo abajo
+    else if(relCy<0.60)heightScore=0.55;
+    else heightScore=0.1; // cara muy abajo (acostado de lado)
+
+    // CENTRADO HORIZONTAL: centroide debe estar cerca del centro
+    var relCx=skinCx/w;
+    var hCenterScore=1-Math.abs(relCx-0.5)/0.38;
+    hCenterScore=Math.max(0,Math.min(1,hCenterScore));
+
+    // COBERTURA: piel ocupa zona significativa (cara+cuerpo visibles)
+    var skinRatio=skinN/(w*h);
+    var coverScore=skinRatio<0.05?skinRatio/0.05*0.4:skinRatio>0.70?0.3:1-Math.abs(skinRatio-0.30)/0.40;
+    coverScore=Math.max(0,Math.min(1,coverScore));
+
+    // PELO ARRIBA: zona superior (y<h*0.20) debería tener píxeles oscuros sobre la piel
+    // Esto detecta que el pelo está encuadrando la cara desde arriba
+    var topDark=0,topTotal=0;
+    var hairY=Math.round(h*0.20);
+    var hairX0=Math.round(skinCx-w*0.20),hairX1=Math.round(skinCx+w*0.20);
+    hairX0=Math.max(0,hairX0);hairX1=Math.min(w-1,hairX1);
+    for(var y2=0;y2<hairY;y2++)for(var x2=hairX0;x2<hairX1;x2++){
+      var idx=y2*w+x2;topTotal++;
+      if(L[idx]<0.35)topDark++; // píxel oscuro = pelo o fondo oscuro arriba
+    }
+    var hairScore=topTotal>0?Math.min(1,topDark/topTotal/0.30):0;
+
+    // OBSTRUCCIÓN: penalizar si un gran bloque de color uniforme cubre el frame
+    // (dedo/mano tapando la cámara)
+    var topLeftLum=0,n2=0;
+    var checkH=Math.round(h*0.25),checkW=Math.round(w*0.25);
+    for(var y2=0;y2<checkH;y2++)for(var x2=0;x2<checkW;x2++){topLeftLum+=L[y2*w+x2];n2++;}
+    var avgTopLeft=n2?topLeftLum/n2:0;
+    var topRightLum=0,n3=0;
+    for(var y2=0;y2<checkH;y2++)for(var x2=w-checkW;x2<w;x2++){topRightLum+=L[y2*w+x2];n3++;}
+    var avgTopRight=n3?topRightLum/n3:0;
+    // Si esquina superior es color uniforme muy diferente al centro → obstrucción
+    var centerLum=0,n4=0;
+    var cy0=Math.round(h*0.30),cy1=Math.round(h*0.60);
+    var cx0=Math.round(w*0.30),cx1=Math.round(w*0.70);
+    for(var y2=cy0;y2<cy1;y2++)for(var x2=cx0;x2<cx1;x2++){centerLum+=L[y2*w+x2];n4++;}
+    var avgCenter=n4?centerLum/n4:0.5;
+    var obstruccion=1;
+    if(Math.abs(avgTopLeft-avgCenter)>0.35||Math.abs(avgTopRight-avgCenter)>0.35){
+      obstruccion=0.35; // penalizar obstrucción
+    }
+
+    encuadre=(orientScore*0.32+heightScore*0.28+hCenterScore*0.18+coverScore*0.12+hairScore*0.10)*obstruccion;
+    encuadre=Math.max(0,Math.min(1,encuadre));
+  }
+
+  // === 2. LUZ EN ZONA DE CARA ===
+  // Evaluar la iluminación específicamente en la zona superior-central (donde está la cara)
+  var faceLum=0,faceN=0;
+  var fy0=Math.round(h*0.05),fy1=Math.round(h*0.55);
+  var fx0=Math.round(w*0.15),fx1=Math.round(w*0.85);
+  for(var y=fy0;y<fy1;y++)for(var x=fx0;x<fx1;x++){faceLum+=L[y*w+x];faceN++;}
+  var faceMeanLum=faceN?faceLum/faceN:0;
+  var luzFace=faceMeanLum<0.10?0.1:faceMeanLum>0.90?0.25:1-Math.abs(faceMeanLum-0.48)/0.48*0.35;
+
+  // Contraste general
+  var lMean=0;for(var i=0;i<L.length;i++)lMean+=L[i];lMean/=L.length;
+  var lVar=0;for(var i=0;i<L.length;i++)lVar+=(L[i]-lMean)*(L[i]-lMean);
+  var contraste=Math.min(1,Math.sqrt(lVar/L.length)/0.15);
+  var luz=luzFace*0.65+contraste*0.35;
+
+  // === 3. SIMETRÍA FACIAL ===
+  var cx2=Math.round(w/2),sp=Math.max(4,Math.round(w*0.08)),st=Math.max(1,Math.round(w*0.03));
+  var sy0=Math.round(h*0.03),sy1=Math.round(h*0.75),bestSym=0;
+  for(var off=-sp;off<=sp;off+=st){
+    var ax=cx2+off,mo=Math.min(ax,w-ax)-2;
+    if(mo<w*0.14)continue;
+    var diff=0,n=0;
+    for(var y=sy0;y<sy1;y+=2)for(var dx=4;dx<mo;dx+=3){
+      var xl=Math.round(ax-dx),xr=Math.round(ax+dx);
+      if(xl<0||xr>=w)continue;diff+=Math.abs(L[y*w+xl]-L[y*w+xr]);n++;
+    }
+    if(n>0){var s=Math.max(0,1-diff/n/0.20);if(s>bestSym)bestSym=s;}
+  }
+  var simetria=bestSym;
+
+  // === 4. COLOR / TONO DE PIEL ===
+  var satSum=0,warmSum=0,cn=w*h;
+  for(var i=0;i<cn;i++){
+    var mx=Math.max(R[i],G[i],B[i]),mn=Math.min(R[i],G[i],B[i]);
+    satSum+=(mx>0?(mx-mn)/mx:0);
+    warmSum+=(R[i]-B[i]+1)/2;
+  }
+  var sat=satSum/cn,warm=warmSum/cn;
+  var satS=sat<0.07?0.3:sat>0.72?0.25:1-Math.abs(sat-0.30)/0.30*0.25;
+  var color=Math.max(0,satS*0.60+(1-Math.abs(warm-0.55)/0.40)*0.40);
+
+  // === 5. NITIDEZ ===
   var lapSum=0,lapN=0;
   for(var y=1;y<h-1;y++)for(var x=1;x<w-1;x++){
     var i=y*w+x,v=4*L[i]-L[i-1]-L[i+1]-L[i-w]-L[i+w];
     lapSum+=v*v;lapN++;
   }
-  var nitidez=Math.min(1,(lapN?lapSum/lapN:0)/0.008);
+  var nitidez=Math.min(1,(lapN?lapSum/lapN:0)/0.007);
 
-  // --- LUZ: exposición + contraste ---
-  var lMean=0;for(var i=0;i<L.length;i++)lMean+=L[i];lMean/=L.length;
-  var lVar=0;for(var i=0;i<L.length;i++)lVar+=(L[i]-lMean)*(L[i]-lMean);lVar/=L.length;
-  var contrast=Math.sqrt(lVar);
-  var lumScore=lMean<0.12?lMean/0.12*0.2:lMean>0.88?Math.max(0,1-(lMean-0.88)/0.12):1-Math.abs(lMean-0.48)/0.48*0.3;
-  var luz=lumScore*0.55+Math.min(1,contrast/0.16)*0.45;
-
-  // --- COLOR: saturación + calidez ---
-  var satSum=0,warmSum=0;
-  for(var i=0;i<w*h;i++){
-    var mx=Math.max(R[i],G[i],B[i]),mn=Math.min(R[i],G[i],B[i]);
-    satSum+=(mx>0?(mx-mn)/mx:0);
-    warmSum+=(R[i]-B[i]+1)/2;
-  }
-  var sat=satSum/(w*h),warm=warmSum/(w*h);
-  var satScore=sat<0.08?sat/0.08*0.3:sat>0.75?Math.max(0.2,1-(sat-0.75)/0.25):1-Math.abs(sat-0.32)/0.32*0.25;
-  var color=satScore*0.65+Math.max(0,1-Math.abs(warm-0.55)/0.38)*0.35;
-
-  // --- SIMETRÍA: espejo en zona central ---
-  var cx=Math.round(w/2),sp=Math.max(4,Math.round(w*0.10)),st=Math.max(1,Math.round(w*0.04));
-  var y0=Math.round(h*0.03),y1=Math.round(h*0.80),bestSym=0;
-  for(var off=-sp;off<=sp;off+=st){
-    var ax=cx+off,mo=Math.min(ax,w-ax)-2;
-    if(mo<w*0.15)continue;
-    var diff=0,n=0;
-    for(var y=y0;y<y1;y+=2)for(var dx=5;dx<mo;dx+=3){
-      var xl=Math.round(ax-dx),xr=Math.round(ax+dx);
-      if(xl<0||xr>=w)continue;
-      diff+=Math.abs(L[y*w+xl]-L[y*w+xr]);n++;
-    }
-    if(n>0){var s=Math.max(0,1-diff/n/0.22);if(s>bestSym)bestSym=s;}
-  }
-  var simetria=bestSym;
-
-  // --- POSTURA / ENCUADRE: detectar si está de pie con cara arriba ---
-  // Skin tone detection (normalizado 0-1)
-  var z0=0,z1=0,z2=0,z3=0,skinTotal=0; // 4 zonas verticales
-  var cx2=Math.round(w*0.25),cx3=Math.round(w*0.75); // zona horizontal central
-  for(var y=0;y<h;y++){
-    for(var x=0;x<w;x++){
-      var i=y*w+x,r=R[i],g=G[i],b=B[i];
-      // Detección de piel amplia (funciona con distintos tonos)
-      var mx=Math.max(r,g,b),mn=Math.min(r,g,b),rng=mx-mn;
-      var isSkin=(r>0.30&&g>0.15&&b>0.05&&rng>0.05&&r>g&&r>=b&&(r-g)>0.04&&r>0.38);
-      if(!isSkin)continue;
-      skinTotal++;
-      // Solo contar piel en zona horizontal central (evita fondo)
-      var zone=Math.floor(y/(h/4));
-      if(zone===0)z0++;else if(zone===1)z1++;else if(zone===2)z2++;else z3++;
-    }
-  }
-  var postura=0.4; // default neutro
-  if(skinTotal>w*h*0.02){ // hay suficiente piel detectada
-    var total4=z0+z1+z2+z3||1;
-    // De pie erguido: piel concentrada arriba (z0+z1 > z2+z3)
-    var topRatio=(z0+z1)/total4;
-    var botRatio=(z2+z3)/total4;
-    // Penalizar si piel está abajo o muy dispersa
-    postura=Math.max(0,Math.min(1,topRatio*1.4-botRatio*0.4));
-    // Extra: si hay piel en zona central horizontal = cara centrada
-    var centerSkin=0,totalSkin2=0;
-    for(var i=0;i<w*h;i++){
-      var x2=i%w;
-      if(R[i]>0.30&&G[i]>0.15&&B[i]>0.05&&(Math.max(R[i],G[i],B[i])-Math.min(R[i],G[i],B[i]))>0.05&&R[i]>G[i]&&R[i]>0.38){
-        totalSkin2++;
-        if(x2>cx2&&x2<cx3)centerSkin++;
-      }
-    }
-    if(totalSkin2>0)postura=postura*0.7+(centerSkin/totalSkin2)*0.3;
-  }
-
-  // --- SCORE TOTAL ---
-  // Postura tiene peso alto para filtrar frames acostados
-  var total=postura*0.30+simetria*0.22+luz*0.22+color*0.14+nitidez*0.12;
+  // === SCORE TOTAL ===
+  // Encuadre tiene el mayor peso — es el parámetro clave para el look que quieres
+  var total=encuadre*0.38+luz*0.22+simetria*0.20+color*0.12+nitidez*0.08;
 
   return{
-    postura:Math.round(Math.min(1,postura)*100),
-    simetria:Math.round(Math.min(1,simetria)*100),
+    encuadre:Math.round(encuadre*100),
     luz:Math.round(Math.min(1,luz)*100),
+    simetria:Math.round(Math.min(1,simetria)*100),
     color:Math.round(Math.min(1,color)*100),
     nitidez:Math.round(Math.min(1,nitidez)*100),
     total:total
   };
 }
 
-function seekTo2(vid,t){return seekTo(vid,t);}
-
 async function analyze(){
   noErr();zone.style.display='none';proc.classList.add('show');results.classList.remove('show');cards.innerHTML='';
   prog(0,'Cargando video…','');
 
-  // Muestreo denso distribuido en TODO el video
   var MAX=60,wanted=parseInt(sl.value);
   var objUrl;
   try{
@@ -276,13 +335,13 @@ async function analyze(){
     document.body.appendChild(vid);
 
     await new Promise(function(res,rej){
-      var tid=setTimeout(function(){rej(new Error('Timeout cargando el video.'));},25000);
+      var tid=setTimeout(function(){rej(new Error('Timeout.'));},25000);
       vid.addEventListener('loadedmetadata',function(){clearTimeout(tid);res();},{once:true});
       vid.addEventListener('error',function(){
         clearTimeout(tid);
         var ec=vid.error?vid.error.code:0;
-        var m={3:'Codec HEVC no soportado en canvas. Ve a Ajustes → Cámara → Formatos → "Más compatible" y graba de nuevo.',4:'Formato no soportado. Prueba con un .mp4.'};
-        rej(new Error(m[ec]||'Error de video código '+ec));
+        var m={3:'Codec HEVC no soportado. Ve a Ajustes → Cámara → Formatos → "Más compatible".',4:'Formato no soportado.'};
+        rej(new Error(m[ec]||'Error código '+ec));
       },{once:true});
       vid.load();
     });
@@ -296,15 +355,11 @@ async function analyze(){
     var ac=document.createElement('canvas');ac.width=W;ac.height=H;
     var ax=ac.getContext('2d',{willReadFrequently:true});
 
-    // Distribuir frames uniformemente en TODO el video
-    // Saltar primeros 8% (setup) y últimos 4% (corte)
-    var tStart=dur*0.08,tEnd=dur*0.96;
-    var tRange=tEnd-tStart;
+    // Distribuir frames en TODO el video (8%–96%)
+    var tStart=dur*0.08,tEnd=dur*0.96,tRange=tEnd-tStart;
     var step=tRange/MAX;
     var times=[];
-    for(var i=0;i<MAX;i++){
-      times.push(parseFloat((tStart+i*step).toFixed(2)));
-    }
+    for(var i=0;i<MAX;i++) times.push(parseFloat((tStart+i*step).toFixed(2)));
 
     var scored=[];
     for(var i=0;i<times.length;i++){
@@ -312,45 +367,39 @@ async function analyze(){
       ax.drawImage(vid,0,0,W,H);
       var imgData;
       try{imgData=ax.getImageData(0,0,W,H);}
-      catch(e){throw new Error('Error leyendo píxeles: '+e.message+'. Codec HEVC no compatible con canvas → Ajustes → Cámara → Formatos → "Más compatible".');}
-      var s=analyzePixels(imgData.data,W,H);
+      catch(e){throw new Error('Error de canvas: '+e.message+'. → Ajustes → Cámara → Formatos → "Más compatible".');}
+      var s=analyzeFrame(imgData.data,W,H);
       scored.push({t:times[i],s:s});
-      prog(.07+(i+1)/times.length*.78,'Buscando tu mejor ángulo…',
-        'Frame '+(i+1)+'/'+times.length+' · postura '+s.postura);
-      if(i%6===0)await sleep(0);
+      prog(.07+(i+1)/times.length*.76,
+        'Buscando ángulo de modelo…',
+        'Frame '+(i+1)+'/'+times.length+' · encuadre '+s.encuadre+'%');
+      if(i%5===0)await sleep(0);
     }
 
-    // Ordenar por score total
     scored.sort(function(a,b){return b.s.total-a.s.total;});
 
-    // De los mejores, elegir variados en el tiempo (evitar frames consecutivos iguales)
+    // Elegir frames variados en el tiempo
     var selected=[],minGap=tRange/(wanted*2);
     for(var i=0;i<scored.length&&selected.length<wanted;i++){
-      var candidate=scored[i],tooClose=false;
-      for(var j=0;j<selected.length;j++){
-        if(Math.abs(candidate.t-selected[j].t)<minGap){tooClose=true;break;}
-      }
-      if(!tooClose)selected.push(candidate);
+      var c=scored[i],close=false;
+      for(var j=0;j<selected.length;j++){if(Math.abs(c.t-selected[j].t)<minGap){close=true;break;}}
+      if(!close)selected.push(c);
     }
-    // Si no hay suficientes variados, completar con los mejores restantes
-    if(selected.length<wanted){
-      for(var i=0;i<scored.length&&selected.length<wanted;i++){
-        if(selected.indexOf(scored[i])===-1)selected.push(scored[i]);
-      }
+    for(var i=0;i<scored.length&&selected.length<wanted;i++){
+      if(selected.indexOf(scored[i])===-1)selected.push(scored[i]);
     }
 
-    prog(.87,'Exportando mejores tomas…','');
+    prog(.85,'Exportando…','');
     var fc=document.createElement('canvas'),fctx=fc.getContext('2d');
     var frames=[];
     for(var i=0;i<selected.length;i++){
-      var r=selected[i];
-      await seekTo(vid,r.t);
+      await seekTo(vid,selected[i].t);
       var sx=0,sy=0,sw=vw,sh=vh;
-      if(square){var sz=Math.min(vw,vh);sx=Math.round((vw-sz)/2);sy=Math.max(0,Math.round((vh-sz)/2*.55));sw=sz;sh=sz;}
+      if(square){var sz=Math.min(vw,vh);sx=Math.round((vw-sz)/2);sy=Math.max(0,Math.round((vh-sz)/2*.50));sw=sz;sh=sz;}
       fc.width=sw;fc.height=sh;
       fctx.drawImage(vid,sx,sy,sw,sh,0,0,sw,sh);
-      frames.push({url:fc.toDataURL('image/jpeg',.93),s:r.s});
-      prog(.87+.13*(i+1)/selected.length,'Exportando…',(i+1)+'/'+selected.length);
+      frames.push({url:fc.toDataURL('image/jpeg',.93),s:selected[i].s});
+      prog(.85+.15*(i+1)/selected.length,'Exportando…',(i+1)+'/'+selected.length);
     }
     URL.revokeObjectURL(objUrl);vid.remove();
     prog(1,'¡Listo!','');
@@ -362,12 +411,12 @@ async function analyze(){
   }
 }
 
-function bc(v){return v>=70?'hi':v>=44?'md':'lo';}
+function bc(v){return v>=68?'hi':v>=42?'md':'lo';}
 
 function render(frames){
   proc.classList.remove('show');results.classList.add('show');cards.innerHTML='';
   var cats=[
-    {key:'postura',label:'Postura'},
+    {key:'encuadre',label:'Encuadre'},
     {key:'simetria',label:'Simetría'},
     {key:'luz',label:'Luz'},
     {key:'color',label:'Color'},
